@@ -376,10 +376,10 @@ if __name__ == '__main__':
                     bothOrderbooks = getBothOrderbooks(bit, baseid, relid)
                 except Exception as e:
                     printToBottom(31)
-                    #try:
-                    raw_input("Error: (%s). Enter any key to continue..."%(e.args))
-                    #except:
-                        #raw_input("Error: could not retrieve orderbook. Enter any key to continue...")
+                    try:
+                     raw_input("Error: (%s). Enter any key to continue..."%(e.args))
+                    except:
+                        raw_input("Error: (%s). Enter any key to continue..."%(e))
                     break
                 else:
                     #if 'error' in bothOrderbooks[0] or 'error' in bothOrderbooks[1]:
