@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
-import json, sys
-import bitcoinrpc, bitcoinrpc.authproxy
-import decimal 
-import random
-import time
-import operator
-import ConfigParser
+import os, sys
+import decimal
 from decimal import *
+import operator
+import json
+import ConfigParser
+import bitcoinrpc, bitcoinrpc.authproxy
 
 sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=32, cols=100))
 
@@ -16,12 +14,22 @@ getcontext().prec = 10
 getcontext().rounding = ROUND_FLOOR
 
 Config = ConfigParser.ConfigParser()
-Config.read('sleuther.conf')
-rpcuser = Config.get('BitcoinDark', 'rpcuser')
-rpcpass = Config.get('BitcoinDark', 'rpcpass')
-rpcport = Config.get('BitcoinDark', 'rpcport')
+try:
+    Config.read('sleuther.conf')
+    rpcuser = Config.get('BitcoinDark', 'rpcuser')
+    rpcpass = Config.get('BitcoinDark', 'rpcpass')
+    rpcport = Config.get('BitcoinDark', 'rpcport')
+    assetFile = Config.get('General', 'assetFile')
+except:
+    print("Invalid sleuther.conf")
+    sys.exit()
 
-assetInfo = json.load(open('assetInfo.txt'))
+try:
+    assetInfo = json.load(open(assetFile))
+except:
+    print("Could not find an assetInfo file")
+    sys.exit()
+
 
 class Orders(object):
     def __init__(self, config = {}):
