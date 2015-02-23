@@ -377,7 +377,7 @@ if __name__ == '__main__':
                 except Exception as e:
                     printToBottom(31)
                     try:
-                     raw_input("Error: (%s). Enter any key to continue..."%(e.args))
+                        raw_input("Error: (%s). Enter any key to continue..."%(e.args))
                     except:
                         raw_input("Error: (%s). Enter any key to continue..."%(e))
                     break
