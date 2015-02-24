@@ -384,10 +384,7 @@ if __name__ == '__main__':
                     bothOrderbooks = getBothOrderbooks(bit, baseid, relid)
                 except Exception as e:
                     printToBottom(31)
-                    try:
-                        raw_input("Error: (%s). Enter any key to continue..."%(e.args))
-                    except:
-                        raw_input("Error: (%s). Enter any key to continue..."%(e))
+                    raw_input("Error: (%s). Enter any key to continue..."%(e))
                     break
                 else:
                     #if 'error' in bothOrderbooks[0] or 'error' in bothOrderbooks[1]:
@@ -424,20 +421,31 @@ if __name__ == '__main__':
                     print "Error: could not place %s" %typeOrder
                     printToBottom(30)
 
-                raw_input('Press any key to continue')
+                raw_input('Enter any key to continue: ')
 
 
         elif userSelection == '4':
 
             print "makeoffer: Not available yet"
             printToBottom(30)
-            raw_input('Press any key to continue')
+            raw_input('Enter any key to continue: ')
 
 
         elif userSelection == '5':
 
-            retOpenOrders = getOpenOrders(bit)
-
+            try:
+                retOpenOrders = getOpenOrders(bit)
+            except Exception as e:
+                printToBottom(31)
+                raw_input('Error: %s. Enter any key to continue... '%(e))
+                continue
+            if not 'openorders' in retOpenOrders:
+                printToBottom(31)
+                try:
+                    raw_input('Result: %s. Enter any key to continue... '%(retOpenOrders['result']))
+                except:
+                    raw_input('Error %s. Enter any key to continue... '%(retOpenOrders))
+                continue               
             while True:
                 openOrdersInterface()
                 userSelection = raw_input('Enter an option: ')
