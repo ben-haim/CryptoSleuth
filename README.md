@@ -9,6 +9,8 @@ Dependencies:
 
 Running:  
 sh run.sh  
+  
+Use TAB to go up a screen and `(~) to cycle through options in current screen  
 
 Remember to modify cryptosleuth.conf to match your BitcoinDark.conf settings  
 assetInfo.txt contains names/assetIDs/descriptions for all assets. Allows asset names to be entered instead of IDs  
