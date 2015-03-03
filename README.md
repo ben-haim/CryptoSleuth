@@ -12,4 +12,5 @@ sh run.sh
 
 Remember to modify cryptosleuth.conf to match your BitcoinDark.conf settings  
 assetInfo.txt contains names/assetIDs/descriptions for all assets. Allows asset names to be entered instead of IDs  
-If you run into any fatal crashes you will have to close+reopen your terminal to get it back to normal 
+If you run into any fatal crashes you will have to close+reopen your terminal to get it back to normal  
+Must have SuperNET running. Also need to view any orderbook before active orderbooks list will show
