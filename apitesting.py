@@ -6,16 +6,11 @@
 # Powered by SuperNET
 # Created by CryptoSleuth
 
-import io
 import sys
-import os
 import signal
 import threading
 import time
-import decimal
-import operator
-import random
-import thread
+import requests
 
 import curses
 from curses.textpad import Textbox, rectangle
@@ -28,6 +23,7 @@ import ConfigParser
 from subprocess import Popen, PIPE
 from Queue import Queue, Empty
 from threading import Thread
+ 
 #getcontext().prec = 10
 #getcontext().rounding = ROUND_FLOOR
 
@@ -41,9 +37,7 @@ curses.curs_set(0)
 mainWindow.keypad(1) 
 curses.start_color() 
 curses.use_default_colors()
-curses.init_pair(1,curses.COLOR_BLACK, curses.COLOR_WHITE) 
-h = curses.color_pair(1)
-n = curses.A_NORMAL
+from tui import * 
 
 
 ########## CONSTANTS  ###########
@@ -134,7 +128,12 @@ def placeOrder(authService, baseid, relid, price, volume, orderType):
 
 def getOrderbook(authService, baseid, relid):
     
-    return json.loads(authService.SuperNET('{"requestType":"orderbook","baseid":"'+baseid+'","relid":"'+relid+'","allfields":1}'))
+    try:
+        a = authService.SuperNET('{"requestType":"orderbook","baseid":"'+baseid+'","relid":"'+relid+'","allfields":1}')
+    except Exception as e:
+        raise
+
+    return json.loads(a)
 
 
 def getOpenOrders(authService):
@@ -207,352 +206,11 @@ def fourArrowUI(window):
     return
 
 
-##########   WINDOW   ###################
 
-
-class cWindow(object):
-
-    def __init__(self, config={}):
-
-        self.cursesObj = None
-        self.userPos = [0,0]
-        self.prevUserPos = [0,0]
-        self.titlePos = [[],[]]
-        self.titleData = []
-        self.contentPos = [[],[]]
-        self.contentData = []
-        self.windowPos = None
-
-        self.menu = None
-
-        self.parent = None
-        self.children = {
-            "windows":{},
-            "pads":{},
-            "popups":{}  
-        }
-        self.childrenList = []
-        
-        self.name = ""
-        self.typeWin = "menu"
-
-
-    @classmethod
-    def initWindow(self, windowFormat, typeWin=None, parent=None, title=None, content=None):
-
-        self = cWindow()
-
-        height, width = windowFormat[0]
-        startPosY = windowFormat[1][0]
-        startPosX = windowFormat[1][1]
-        endPosY = startPosY+height - 1
-        endPosX = startPosX+width - 1
-
-        self.cursesObj = curses.newwin(height, width, startPosY, startPosX)   # height, width, startPosY, 
-        self.windowPos = [[startPosY, startPosX], [endPosY, endPosX]]
-        self.typeWin = typeWin
-        self.parent = parent
-        try:
-            self.initTitle(title[0],title[1])
-        except:
-            pass
-        #self.initContent(content[0], content[1])
-
-        return self
-
-
-    def initTitle(self, titlePos, title, underlined=None):
-    
-        self.titlePos = titlePos
-        startRow, stopRow = self.centerText(titlePos, title)
-        self.cursesObj.addstr(startRow,stopRow,"{0}".format(title))
-        if underlined:
-            line = '-'*(titlePos[1][1]-titlePos[0][1])
-            self.cursesObj.addstr(titlePos[1][0],1,"{0}".format(line))
-
-
-    def initContent(self, contentPos, content):
-
-        pass
-
-    
-    def centerText(self, pos, text):
-    
-        rowLength = pos[1][0] - pos[0][0]
-        colHeight = pos[1][1] - pos[0][1]
-        textLength = len(text)
-
-        #startRow = rowLength/2 - textLength/2
-        #stopRow = startRow + textLength
-
-        startCol = colHeight/2 - textLength/2
-        stopCol = startCol + textLength
-
-        return (pos[0][0], startCol)
-
-
-    def addChild(self, childType, childName, childObj):
-
-        self.children[childType][childName] = childObj
-        self.childrenList.append(childObj)
-
-
-    def popStack(self):
-        if self.parent:
-            for window in self.parent.childrenList:
-                window.cursesObj.clear()
-            self.parent.cursesObj.clear()
-            self.parent.cursesObj.refresh()
-        self.cursesObj.clear()
-        self.cursesObj.refresh()
-        self.userPos = [0,0]
-        windowStack.pop()
-        mainWindow.refresh()
-
-
-##########  POPUP   ##################
-
-class cPopup(cWindow):
-    def __init__(self):
-        cWindow.__init__(self)
-
-        popupHeight = 16; popupWidth = 50
-
-        container = mainWindow
-        containerHeight, containerWidth = container.getmaxyx()
-        startHeight = containerHeight/2 - popupHeight/2
-        stopHeight = startHeight + popupHeight
-        startWidth = containerWidth/2 - popupWidth/2
-        stopWidth = startWidth + popupWidth
-
-        self.titlePos = [[1,1],[12,49]]
-        self.cursesObj = curses.newwin(popupHeight,popupWidth,startHeight,startWidth)
-        self.panel = curses.panel.new_panel(self.cursesObj)
-        self.cursesObj.border(0)
-
-
-    def showPanel(self):
-
-        global windowStack
-        
-        self.panel.show()
-        #self.panel.top()
-        windowStack.append(self)
-
-
-    def popStack(self):
-
-        global windowStack
-
-        self.cursesObj.clear()
-        self.cursesObj.refresh()
-        self.userPos = [0,0]
-        self.panel.hide()
-        windowStack.pop()
-        mainWindow.refresh()
-
-    def popupErrorMessage(self, errorMessage):
-
-        self.cursesObj.addstr(1,22,"Error!")
-        self.cursesObj.addstr(5,3,"{0}".format(errorMessage))
-        self.menu = menu(self, [[1,30],[13,21]], [1,5], [1,10], ["   OK   "])
-        self.menu.initDataFormat()
-        self.cursesObj.refresh()
-
-########   MENU   #########
-
-class menu(object):
-    def __init__(self, parent=None, menuPos=None, maxRowsAndCols=[1,10], rowAndColSize=[1,20], data=None, href=None, dataKeys=None):
-
-        self.parent = parent
-        self.menuPos = menuPos
-        if menuPos:
-            height, width = menuPos[0]
-            startPosY = menuPos[1][0]
-            startPosX = menuPos[1][1]
-            endPosY = startPosY+height - 1
-            endPosX = startPosX+width - 1
-            self.menuPos = [[startPosY,startPosX], [endPosY, endPosX]]
-
-        self.maxRows = maxRowsAndCols[0]
-        self.maxCols = maxRowsAndCols[1]
-        self.rowSize = rowAndColSize[0]
-        self.colSize = rowAndColSize[1]
-
-        self.data = data
-        self.dataKeys = dataKeys
-        self.dataHref = href
-        self.displayedSection = None
-
-
-    def initDataFormat(self):
-
-        numData = len(self.data)
-        self.maxCols = numData/self.maxRows
-        lastRowPos = numData % self.maxRows
-
-        if lastRowPos != 0:
-            self.maxCols += 1
-        else:
-            if numData > 0:
-                lastRowPos = self.maxRows
-
-        self.lastPos = [lastRowPos-1, self.maxCols-1]
-
-
-    def updateMenu(self):
-
-        formatPos = [0,0]
-
-        for counter in range(0,len(self.data)):
-
-            tempString = ""
-            textStyle = h if formatPos == self.parent.userPos else n
-
-            ## Get rid of this after data is auto formatted ##
-            if self.dataKeys is not None:
-                for key in self.dataKeys:
-                    tempString += "{0:20}".format(self.data[counter][key])
-            else:
-                tempString += "{0}".format(self.data[counter])
-            ##                                              ##
-
-            if hasattr(self, 'specials') and self.data[counter] in self.specials:
-                self.parent.cursesObj.addstr(self.specials[self.data[counter]][0],self.specials[self.data[counter]][1], tempString, textStyle)
-            else:
-                self.parent.cursesObj.addstr(self.menuPos[0][0]+formatPos[0],formatPos[1]+self.menuPos[0][1]+self.colSize*counter, tempString, textStyle)
-
-            formatPos[0] += 1
-            if formatPos[0] == self.maxRows:
-                formatPos[0] = 0; formatPos[1] += 1
-
-        self.parent.cursesObj.refresh()
-
-
-############ PAD MENU  #################
-
-class padMenu(menu):
-    def __init__(self, parent=None, menuPos=None, maxRowsAndCols=[1,10], rowAndColSize=[1,20], data=None, href=None, dataKeys=None):
-        menu.__init__(self, parent, menuPos, maxRowsAndCols, rowAndColSize, data, href, dataKeys)
-
-        height, width = menuPos[0]
-        pStartY, pStartX, = self.parent.windowPos[0]
-        startPosY = menuPos[1][0]+pStartY
-        startPosX = menuPos[1][1]+pStartX
-        endPosY = startPosY+height - 1
-        endPosX = startPosX+width - 1
-        self.menuPos = [[startPosY,startPosX], [endPosY, endPosX]]
-
-        self.numDisplayedRows = ((self.menuPos[1][0] - self.menuPos[0][0]) / self.rowSize)
-        self.numDisplayedCols = ((self.menuPos[1][1] - self.menuPos[0][1]) / self.colSize)
-        self.displayedSection = [[0,0], [self.numDisplayedRows, self.numDisplayedCols]]
-
-
-    def updateMenu(self):
-
-        formatPos = [0,0]
-
-        for counter in range(0,len(self.data)):
-
-            tempString = ""
-            textStyle = h if formatPos == self.parent.userPos else n
-
-            ##  Get rid of this ##
-            if self.dataKeys is not None:
-                for key in self.dataKeys:
-                    try: # BAD
-                        tempString += "{0:20}".format(str(self.data[counter][key]))
-                    except:
-                        tempString = "--------ERROR: DONT CLICK ME--------"
-                        break
-            else:
-                tempString += "{0:20}".format(self.data[counter])
-            ##                  ##
-
-            try: # fix encoding
-                self.parent.cursesObj.addstr(formatPos[0],formatPos[1]*self.colSize, tempString, textStyle)
-            except:
-                pass
-            formatPos[0] += 1
-            if formatPos[0] == self.maxRows:
-                formatPos[0] = 0; formatPos[1] += 1
-
-        if self.parent.userPos[0] > self.displayedSection[1][0]: # down
-            self.displayedSection[1][0] = self.parent.userPos[0]
-            self.displayedSection[0][0] = self.displayedSection[1][0] - self.numDisplayedRows
-        elif self.parent.userPos[0] < self.displayedSection[0][0]: # up
-            self.displayedSection[0][0] = self.parent.userPos[0]
-            self.displayedSection[1][0] = self.displayedSection[0][0] + self.numDisplayedRows
-        elif self.parent.userPos[1] > self.displayedSection[1][1]: # right
-            self.displayedSection[1][1] = self.parent.userPos[1]
-            self.displayedSection[0][1] = self.displayedSection[1][1] - self.numDisplayedCols
-        elif self.parent.userPos[1] < self.displayedSection[0][1]: # left
-            self.displayedSection[0][1] = self.parent.userPos[1]
-            self.displayedSection[1][1] = self.displayedSection[0][1] + self.numDisplayedCols
-
-        self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
-
-
-    def menuToBottom(self):
-    
-        self.displayedSection[1][0] = self.lastPos[0]
-        self.displayedSection[0][0] = self.displayedSection[1][0] - self.numDisplayedRows
-        self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
-
-    def updateData(self, data):
-        
-        self.data = data
-        numData = len(self.data)
-        self.maxRows = numData 
-        self.maxCols = numData/self.maxRows
-        lastRowPos = numData % self.maxRows
-
-        if lastRowPos != 0:
-            self.maxCols += 1
-        else:
-            if numData > 0:
-                lastRowPos = self.maxRows
-
-        self.lastPos = [lastRowPos-1, self.maxCols-1]
-
-############ PAD  ##############
-
-class cPad(cWindow):
-
-    def __init__(self,parent=None, typeWin=None, window=None, title=None, content=None):
-        cWindow.__init__(self)
-
-        self.parent = parent
-        self.cursesObj = curses.newpad(window[0][0],window[0][1])
-        self.typeWin = typeWin
-
-        height, width = window[1]
-        pStartY, pStartX, = self.parent.windowPos[0]
-        startPosY = window[2][0]+pStartY
-        startPosX = window[2][1]+pStartX
-        endPosY = startPosY+height - 1
-        endPosX = startPosX+width - 1
-        self.windowPos = [[startPosY,startPosX], [endPosY, endPosX]]
-
-
-    def drawRectangle(self, cursesObj=None, pos=None):
-        if pos == None:
-            pos = self.windowPos 
-        rectangle(self.parent.cursesObj, pos[0][0],pos[0][1], pos[1][0], pos[1][1])
-        self.parent.cursesObj.refresh()
-
-
-    def popStack(self):
-        self.cursesObj.clear()
-        #self.pad.refresh(0,0,0,0,0,0)
-        self.userPos = [0,0]
-        self.parent.cursesObj.clear()
-        self.parent.cursesObj.refresh()
-        windowStack.pop()
-        #mainWindow.refresh()
 
 
 #########   LAZY HACKS   ################
+
 
 
 def drawSuperNETDefaults(window):
@@ -561,7 +219,9 @@ def drawSuperNETDefaults(window):
         window.initTitle([[2,curses.COLS/2],[2,curses.COLS-1]],"Tests")
     except:
         pass
+
     rectangle(window.cursesObj, 3,87,23,179)
+    rectangle(window.cursesObj, 24,41,40,135)
     rectangle(window.cursesObj, 3,0,23,86)
     #window.children["pads"]["menu"].drawRectangle()
     window.cursesObj.refresh()
@@ -611,14 +271,13 @@ def initWindows():
 
 ##########   SUPERNET  ###############
 
-
     supernet = cWindow.initWindow([[curses.LINES-7,curses.COLS],[5,0]], "supernet", None, None, None)
 
     supernetBar = cWindow.initWindow([[2,curses.COLS-1],[5,1]], "supernetBar", supernet, None, None)
     supernetBar.menu = menu(supernetBar, [[1,curses.COLS-1],[0,1]], [1,1], [1,15], ["Refresh", "Clear", "Filter"])
     supernetBar.menu.initDataFormat()
 
-    supernetPad = cPad(supernet, "supernetPad", [[500,400],[20,90],[4,88]], None, None)
+    supernetPad = cPad(supernet, "supernetPad", [[3500,2000],[20,90],[4,88]], None, None)
 
     testsWin = cWindow.initWindow([[17,85],[9,1]], "testsWin", supernet, None, None)
     #testsPad = cPad(supernet, "snTestPad", [[500,400],[20,86],[4,1]], None, None)
@@ -630,7 +289,14 @@ def initWindows():
     supernet.addChild("windows","testsWin", testsWin)
     supernet.addChild("windows","supernetBar", supernetBar)
 
-#########    SEQUENCE WINDOW    ###################
+#########    PROGRESS WINDOW    ###################
+
+
+    progressPad = cPad(supernet, "progressPad", [[500,400],[14,90],[25,44]], None, None)
+    progressPad.menu = padMenu(progressPad, [[13,89],[0,0]], [1,1], [1,1], [" "], None)
+    progressPad.menu.initDataFormat()
+    supernet.addChild("pads","progressPad", progressPad)
+
 
 
 #########   GLOBAL WINDOW LIST  ###################
@@ -713,13 +379,185 @@ def snRefresher():
             pass
 
     pad = window.children["pads"]["menu"]
+    for i in range(len(snLogs)):
+        if len(snLogs[i]) > 84:
+            snLogs[i] = snLogs[i][:84]
+
     if len(snLogs):
         pad.menu.updateData(snLogs)
-        pad.menu.updateMenu()
         pad.menu.menuToBottom()
         #pad.userPos[1] = pad.menu.lastPos[1]
         #pad.menu.updateMenu()
 
+
+def makeoffer(authService, obj):
+    
+    try:
+        a = authService.SuperNET(json.dumps(obj))
+    except:
+        raise
+
+    return json.loads(a)
+
+def getBal(asset):
+
+    nxturl = "http://127.0.0.1:7876/nxt?"
+    nxtid = "9572159016638540187"
+
+    ret = {}
+    obj = {'requestType':"getAccountAssets",'account':nxtid, 'asset':asset}
+
+    try:
+        r = requests.post(nxturl, data=obj)
+        info = r.json()
+        if "errorCode" in info:
+            return {}
+        return info
+    except:
+        pass
+
+    return {}
+
+
+
+def makeBal(assetID):
+
+    asset = getBal(assetID)
+    aStr = "NAME: "+asset['name'] + ", BAL: " + str(asset['unconfirmedQuantityQNT']) + ", DEC: " + str(asset['decimals'])
+    return aStr
+
+
+def update(pad, menuData):
+    pad.menu.updateData(menuData)
+    pad.menu.menuToBottom()
+
+
+def makeSeq():
+
+    window = allWindows['supernet']
+    pad = window.children["pads"]["progressPad"]
+
+    progress = []
+    jl = "6932037131189568014"
+    #skyn = "6854596569382794790"
+    skyn ="11060861818140490423"
+
+    #   CASE INIT  #
+    caseType = "makeoffer3"
+    typeOffer = "Sell"
+    exchangeType = "any"
+    
+    progress.append("CASE: " + caseType + ", OFFER TYPE: " + typeOffer + ", EXCHANGE: " + exchangeType + "\n")
+    #           #
+
+    progress.append(" \n")
+    update(pad, progress)
+
+    #   CHECK BALANCES  #
+    progress.append("Checking balances...\n")
+    update(pad, progress)
+    progress.append(makeBal(jl))
+    progress.append(makeBal(skyn))
+    update(pad, progress)
+    #                   #
+
+    progress.append(" \n")
+    update(pad, progress)
+
+    #   GET ORDERBOOK   #
+    progress.append("Loading orderbook...\n")
+    update(pad, progress)
+
+    try:
+        a = getOrderbook(bit, jl, skyn)
+    except:
+        a = {}
+
+    needed = "bids" if typeOffer == "Sell" else "asks"
+    if needed in a:
+        a = a[needed]
+    else:
+        a = []
+
+    for i in range(len(a)):
+        try:
+            progress.append(json.dumps(a[i]))
+        except:
+            progress.append(a[i])
+
+    if len(a):
+        update(pad, progress)
+    else:
+        progress.append("Could not load orderbook\n")
+        update(pad, progress)
+    #                  #
+
+    progress.append(" \n")
+    update(pad, progress)
+
+    #   SELECT ORDER   #
+    progress.append("Selecting order...\n")
+
+    if len(a):
+        order = a[0]
+        try:
+            progress.append(json.dumps(order))
+        except:
+            progress.append(order)
+        update(pad, progress)
+    else:
+        order = None
+        progress.append("No orders to choose from\n")
+        update(pad, progress)
+    #                  #
+    
+    progress.append(" \n")
+    update(pad, progress)
+
+    #   DO MAKEOFFER CALL  #
+    time.sleep(1)
+    progress.append("Sending makeoffer...\n")
+
+    if order:
+        obj = {}
+        obj['requestType'] = "makeoffer3"
+        for key in order:
+            obj[key] = order[key]
+        obj['perc'] = 4
+        try:
+            ret = makeoffer(bit, obj)
+        except:
+            ret = "Failed"
+
+        try:
+            ret = json.dumps(ret)
+        except:
+            pass
+
+        progress.append(ret)
+        update(pad, progress)
+    else:
+        progress.append("No orders to choose from\n")
+        update(pad, progress)
+
+    progress.append(" \n")
+    progress.append("Done\n")
+    update(pad, progress)
+    #                  #
+
+
+    #   DUMP RESULTS  #
+    f = open('dump', 'w')
+    for i in range(len(progress)):
+        try:
+            f.write(json.dumps(progress[i])+'\n')
+        except:
+            try:
+                f.write(str(progress[i])+'\n')
+            except:
+                f.write('fail\n')
+    f.close()
+    #                 #
 
 ##################    MAIN    ###########################
 
@@ -752,7 +590,7 @@ def processWindow(window):
     elif window.typeWin == "supernet":
         #window.cursesObj.border()
         pad = window.children["pads"]["menu"]
-        pad.menu = padMenu(pad, [[19,89],[0,0]], [1,1], [1,25], [""], None)
+        pad.menu = padMenu(pad, [[19,89],[0,0]], [1,1], [1,1], [" "], None)
         pad.menu.initDataFormat()
         snPadRefresher = Looping()
         t = Thread(target = snPadRefresher.runForever)
@@ -779,8 +617,7 @@ def processWindow(window):
             elif currentChild.typeWin == "testsWin":
                 barSelection = currentChild.menu.data[currentChild.userPos[1]]
                 if barSelection == "Sequence":
-
-                    processWindow(window)
+                    makeSeq()
                 elif barSelection == "Cases":
 
                     processWindow(window)
@@ -791,7 +628,10 @@ def processWindow(window):
                 #baseRel.append(currentChild.menu.data[currentChild.userPos[1]*currentChild.menu.maxRows+currentChild.userPos[0]])
 
 
-        
+
+
+
+
 if __name__ == '__main__':
 
     #global windowStack
