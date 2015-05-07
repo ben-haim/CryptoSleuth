@@ -312,20 +312,35 @@ def initWindows():
 
 ################ SUPERNET #####################
 
+from threading import Lock
+lock = Lock()
+readers = []
+
 def loop1(stream):
     global q
+    global readers
     while True:
         line = stream.readline()
         if line:
-            q.put(line, False)
+            obj = {"ts":time.time(), "line":line}
+            q.put(obj, False)
+
+            with lock:
+                for i in range(len(readers)):
+                    readers[i]['q'].put(obj, False)
     pass
 
 def loop2(stream):
     global q2
+    global readers
     while True:
         line = stream.readline()
         if line:
-            q2.put(line, False)
+            obj = {"ts":time.time(), "line":line}
+            q.put(obj, False)
+            with lock:
+                for i in range(len(readers)):
+                    readers[i]['q'].put(obj, False)
     pass
 
 
@@ -358,37 +373,65 @@ class Looping(object):
 
 def snRefresher():
     global q
-    global q2
     global pro
     global snLogs
 
+    s = []
     window = allWindows['supernet']
+    pad = window.children["pads"]["menu"]
 
     if pro:
-        a = []
-        b = []
         while not q.empty():
             snLogs.append(q.get(False))
-        while not q2.empty():
-            snLogs.append(q2.get(False))
-        try:
-            for key in b:
-                a.append(key)
-                pass
-        except:
-            pass
 
-    pad = window.children["pads"]["menu"]
+
     for i in range(len(snLogs)):
-        if len(snLogs[i]) > 84:
-            snLogs[i] = snLogs[i][:84]
+        if len(snLogs[i]['line']) > 84:
+            snLogs[i]['line'] = snLogs[i]['line'][:84]
+        s.append(getDate(snLogs[i]['ts'])+": "+snLogs[i]['line'])
 
-    if len(snLogs):
-        pad.menu.updateData(snLogs)
+    if len(s):
+        pad.menu.updateData(s)
         pad.menu.menuToBottom()
-        #pad.userPos[1] = pad.menu.lastPos[1]
-        #pad.menu.updateMenu()
 
+clogs = []
+progress = []
+def caseRefresher():
+    global readers
+    global pro
+    global clogs
+    global progress
+
+    for i in range(len(progress)):
+        clogs.append(progress[i])
+
+    with lock:
+        readers.append({'q':Queue()})
+
+    window = allWindows['supernet']
+    pad = window.children["pads"]["progressPad"]
+
+    while True:
+        with lock:
+
+            s = []
+            while not readers[0]['q'].empty():
+                s.append(readers[0]['q'].get(False))
+
+
+            for i in range(len(s)):
+                if len(s[i]['line']) > 84:
+                    s[i]['line'] = s[i]['line'][:84]
+                clogs.append(getDate(s[i]['ts'])+": "+s[i]['line'])
+
+            if len(s):
+                pad.menu.updateData(clogs)
+                pad.menu.menuToBottom()
+
+
+def getDate(ts):
+    import datetime
+    return datetime.datetime.fromtimestamp(int(ts)).strftime("%H:%M:%S")
 
 def makeoffer(authService, obj):
     
@@ -437,7 +480,7 @@ def makeSeq():
     window = allWindows['supernet']
     pad = window.children["pads"]["progressPad"]
 
-    progress = []
+    global progress
     jl = "6932037131189568014"
     #skyn = "6854596569382794790"
     skyn ="11060861818140490423"
@@ -557,6 +600,10 @@ def makeSeq():
             except:
                 f.write('fail\n')
     f.close()
+
+    t = Thread(target=caseRefresher)
+    t.daemon = True
+    t.start()
     #                 #
 
 ##################    MAIN    ###########################
@@ -593,7 +640,7 @@ def processWindow(window):
         pad.menu = padMenu(pad, [[19,89],[0,0]], [1,1], [1,1], [" "], None)
         pad.menu.initDataFormat()
         snPadRefresher = Looping()
-        t = Thread(target = snPadRefresher.runForever)
+        t = Thread(target=snPadRefresher.runForever)
         t.daemon = True
         t.start()
 
