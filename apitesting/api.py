@@ -6,21 +6,21 @@
 
 import requests
 from params import snPostParams
-
+import json
 
 class API(object):
 
 
     def __init__(self, config={}):
 
-        self.snDir = None
-
-        self.btcdUser = None
-        self.btcdPass = None
-        self.btcdPort = None
+        #self.snDir = None
+        #self.btcdUser = None
+        #self.btcdPass = None
+        #self.btcdPort = None
         #self.rpc = 'http://'+rpcuser+':'+rpcpass+'@127.0.0.1:'+rpcport
         #self.bit = bitcoinrpc.authproxy.AuthServiceProxy(rpc)
-
+        self.nxtPort = 7876
+        self.snPort = 7777
         self.nxturl = "http://127.0.0.1:7876/nxt?"
         self.snurl = "http://127.0.0.1:7777"
 
@@ -36,13 +36,13 @@ class API(object):
         return obj
 
 
-    def doAPICall(self, method, params, isNXT):
+    def doAPICall(self, method, params, isNXT=False):
 
         if isNXT:
             url = self.nxturl
         else:
             url = self.snurl
-            params = self.buildParams(method, params)
+            #params = self.buildParams(method, params)
             params = json.dumps(params)
 
         try:

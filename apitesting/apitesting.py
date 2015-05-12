@@ -12,7 +12,10 @@ import ConfigParser
 from tui import * 
 from sndaemon import SNDaemon
 from daemonstream import DaemonStream, PadRefresher
-#from APIcalls import API
+from userclass import User
+from makeoffer import MakeOffer
+from utils import *
+#from api import API
 
 
 
@@ -91,6 +94,7 @@ def processWindow(window):
     global windowStack
     global allWindows
     global mainPadRefresher
+    global user
 
     getMainWindow().refresh()
 
@@ -116,11 +120,13 @@ def processWindow(window):
         drawSuperNETDefaults(window)
         mainPadRefresher.start()
         counter = 0
-        while True: # get rid of this
+        user.updateAssetBalances()
+
+        while True:
             currentChild = window.childrenList[counter]
             currentChild.userPos = currentChild.prevUserPos
             ret = fourArrowUI(currentChild)
-            if ret == -2: # handle this somewhere else
+            if ret == -2:
                 currentChild.prevUserPos = currentChild.userPos
                 currentChild.userPos = [-1,0]
                 currentChild.menu.updateMenu()
@@ -136,7 +142,8 @@ def processWindow(window):
             elif currentChild.typeWin == "testsWin":
                 barSelection = currentChild.menu.data[currentChild.userPos[1]]
                 if barSelection == "Sequence":
-                    makeSeq()
+                    makeoffer = MakeOffer({"offerType":"Sell", "exchangeType":"any", "perc":"1", "user":user, "baseID":"11060861818140490423", "relID":"6854596569382794790"})
+                    makeoffer.flow()
                 elif barSelection == "Cases":
                     processWindow(window)
                 elif barSelection == "Results":
@@ -151,6 +158,8 @@ if __name__ == '__main__':
         rpcuser = Config.get('BitcoinDark', 'rpcuser')
         rpcpass = Config.get('BitcoinDark', 'rpcpass')
         rpcport = Config.get('BitcoinDark', 'rpcport')
+        nxtrs = Config.get('NXT', 'nxtrs')
+        nxtid = Config.get('NXT', 'nxtid')
         sndir = Config.get('SuperNET', 'sndir')
         assetFile = Config.get('General', 'assetFile')
     except:
@@ -158,11 +167,12 @@ if __name__ == '__main__':
 
     try:
         assetInfo = json.load(open(assetFile))
+        assetInfo = addAssetID(assetInfo)
     except:
         exit_handler("Could not find assetInfo file")
 
+    
     signal.signal(signal.SIGINT, signal_handler)
-
     initCurses()
     initWindows()
 
@@ -171,7 +181,7 @@ if __name__ == '__main__':
     mainDaemonStream = DaemonStream({'snDaemon':snDaemon, 'name':'main'})
     mainDaemonStream.start()
     mainPadRefresher = PadRefresher({'daemonStream':mainDaemonStream, 'pad':allWindows['supernet'].children["pads"]["menu"], 'timer':3})
-
+    user = User({"allAssets":assetInfo, "nxtid":nxtid, "nxtrs":nxtrs})
     windowStack.append(allWindows["mainMenu"])
     processWindow(windowStack[0])
 

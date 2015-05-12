@@ -2,28 +2,39 @@
 # -*- coding: utf-8 -*-
 
 
-from utils import searchListOfObjects
+from utils import *
+from api import API
 
 class User(object):
 
     def __init__(self, config={}):
 
-        self.API = None
+        self.api = API()
 
-        self.allAssets = []
+        self.allAssets = config['allAssets']
         self.balances = []
         self.openOrders = []
 
-        self.nxtID = ""
-        self.nxtRS = ""
+        self.nxtID = config['nxtid']
+        self.nxtRS = config['nxtrs']
         self.nxtPass = ""
         self.pubAddr = ""
         self.privAddr = "" 
 
+    
 
+    def updateAssetBalances(self):
+        self.balances = []
+        postObj = {'requestType':"getAccountAssets",'account':self.nxtID}
+        ret = self.api.doAPICall("getAccountAsset", postObj, True)
 
-    def updateBalances(self):
-        pass
+        if "errorCode" in ret:
+            pass
+        else:
+            if "accountAssets" in ret:
+                assetBalances = ret['accountAssets']
+                self.balances = assetBalances
+    
 
     def getBal(self, assetID):
 
@@ -47,6 +58,13 @@ class Asset(object):
         self.name = ""
         self.assetID = ""
         self.decimals = 0
+        self.quantityQNT = ""
+        self.account = ""
+        self.accountRS = ""
+        self.description = ""
+        self.numberOfTrades = 0
+        self.numberOfAccounts = 0
+        self.numberOfTransfers = 0
         self.isSpecial = False
 
 
@@ -60,6 +78,7 @@ class Balance(object):
         self.assetID = ""
         self.decimals = 0
         self.isSpecial = False
+        
 
 
     def makeBal(self):

@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-snPostParams = 
-{
-    "makeoffer3":
-    {
-        "params": 
-        [
+snPostParams = {
+    "makeoffer3": {
+        "params": [
             {"name":"baseid", "optional":False, "default":None, "valueType":None},
             {"name":"relid", "optional":False, "default":None, "valueType":None},
             {"name":"quoteid", "optional":False, "default":None, "valueType":None},
