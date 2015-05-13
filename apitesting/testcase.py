@@ -13,6 +13,8 @@ class Stage(object):
 
     def __init__(self, config={}):
 
+        #self.caseName = "test"
+        #self.caseType = "makeoffer3"
         self.progress = []
         self.percentComplete = 0
         self.status = None

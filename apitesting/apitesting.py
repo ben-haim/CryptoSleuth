@@ -63,7 +63,7 @@ def initWindows():
 
     supernet = cWindow.initWindow([[curses.LINES-7,getCursesCols()],[5,0]], "supernet", None, None, None)
 
-    supernetPad = cPad(supernet, "supernetPad", [[3500,1000],[20,90],[4,88]], None, None)
+    supernetPad = cPad(supernet, "supernetPad", [[5500,1000],[20,90],[4,88]], None, None)
     supernetPad.menu = padMenu(supernetPad, [[19,87],[0,0]], [1,1], [1,1], [" "], None)
     supernetPad.menu.initDataFormat()
 
@@ -95,6 +95,7 @@ def processWindow(window):
     global allWindows
     global mainPadRefresher
     global user
+    global snDaemon
 
     getMainWindow().refresh()
 
@@ -142,7 +143,7 @@ def processWindow(window):
             elif currentChild.typeWin == "testsWin":
                 barSelection = currentChild.menu.data[currentChild.userPos[1]]
                 if barSelection == "Sequence":
-                    makeoffer = MakeOffer({"offerType":"Sell", "exchangeType":"any", "perc":"1", "user":user, "baseID":"11060861818140490423", "relID":"6854596569382794790"})
+                    makeoffer = MakeOffer({"snDaemon":snDaemon, "offerType":"Sell", "exchangeType":"any", "perc":"1", "user":user, "baseID":"11060861818140490423", "relID":"6854596569382794790"})
                     makeoffer.flow()
                 elif barSelection == "Cases":
                     processWindow(window)

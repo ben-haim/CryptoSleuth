@@ -69,12 +69,22 @@ class SNDaemon(object):
     def getPrintouts(self, index=None, startTime=None, endTime=None):
 
         parsed = []
+        startIndex = -1
+        endIndex = -1
 
         with self.printoutLock:
             for i in range(len(self.printoutList)):
-                if index and i < index:
-                    continue
-                parsed.append(self.printoutList[i])
+                line = self.printoutList[i]
+                #if index and i < index:
+                #    continue
+                if startIndex == -1 and line['ts'] >= startTime:
+                    startIndex = i
+                if endIndex == -1 and line['ts'] >= endTime:
+                    endIndex = i
+
+            if not endIndex:
+                endIndex = len(self.printoutList) - 1
+            parsed = self.printoutList[startIndex:]
 
         return parsed
 

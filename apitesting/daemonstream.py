@@ -11,6 +11,7 @@ class DaemonStream(object):
 
     def __init__(self, obj):
 
+        self.stopLock = Lock()
         self.isRunning = True
         self.queue = {"q":Queue(), "lock":Lock(), "name":obj['name']}
         self.streamData = []
@@ -28,14 +29,30 @@ class DaemonStream(object):
 
 
     def stop(self):
-        self.isRunning = False
+        with self.stopLock:
+            self.isRunning = False
 
 
     def readStream(self):
         while self.isRunning:
-            with self.queue['lock']:
-                while not self.queue['q'].empty():
-                    self.streamData.append(self.queue['q'].get(False))
+            with self.stopLock:
+                if self.isRunning:
+                    with self.queue['lock']:
+                        while not self.queue['q'].empty():
+                            self.streamData.append(self.queue['q'].get(False))
+
+    def formatStreamData(self):
+
+        formatted = []
+
+        for i in range(len(self.streamData)):
+            data = self.streamData[i]
+            s = getDate(data['ts'])+": "+data['line']
+            #if len(s) > 90:
+            #    s = s[:90]
+            formatted.append(s)
+
+        return formatted
 
 
 class PadRefresher(object):
