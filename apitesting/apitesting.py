@@ -144,6 +144,7 @@ def processWindow(window):
                 barSelection = currentChild.menu.data[currentChild.userPos[1]]
                 if barSelection == "Sequence":
                     makeofferTests()
+                    #makeofferTest_nxtae()
                 elif barSelection == "Cases":
                     processWindow(window)
                 elif barSelection == "Results":
@@ -155,27 +156,58 @@ def makeofferTests():
     global snDaemon
     global user
 
+    baseAsset = user.getAsset("assetID", "2892714921553533909")
+    relAsset = user.getAsset("assetID", "13995071746675094813")
+
     obj = {}
     obj['snDaemon'] = snDaemon
     obj['exchangeType'] = "nxtae_nxtae"
     obj['user'] = user
-    obj['baseID'] = "11060861818140490423"
-    obj['relID'] = "6854596569382794790"
+    obj['baseID'] = baseAsset['assetID']
+    obj['relID'] = relAsset['assetID']
     obj['offerType'] = "Sell"
     counter = 0
 
-    while counter < 10:
+    while counter < 1:
 
         obj['perc'] = "1"
         obj['filename'] = "makeoffer_"+str(counter)
 
         makeoffer = MakeOffer(obj)
-        makeoffer.flow()
+        makeoffer.init()
 
         obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
         counter += 1
         time.sleep(1)
 
+def makeofferTest_nxtae():
+
+    global snDaemon
+    global user
+
+    baseAsset = user.getAsset("assetID", "2892714921553533909")
+    relAsset = user.getAsset("assetID", "5527630")
+
+    obj = {}
+    obj['snDaemon'] = snDaemon
+    obj['exchangeType'] = "nxtae"
+    obj['user'] = user
+    obj['baseID'] = baseAsset['assetID']
+    obj['relID'] = relAsset['assetID']
+    obj['offerType'] = "Buy"
+    counter = 0
+
+    while counter < 1:
+
+        obj['perc'] = "1"
+        obj['filename'] = "makeoffer_"+str(counter)
+
+        makeoffer = MakeOffer(obj)
+        makeoffer.nxtae_flow()
+
+        obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
+        counter += 1
+        time.sleep(1)
 
 if __name__ == '__main__':
 

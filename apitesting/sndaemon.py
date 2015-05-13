@@ -13,6 +13,7 @@ class SNDaemon(object):
 
         self.snDir = config['sndir']
 
+        self.isRunning = True
         self.snProcess = None
         self.snThread = None
         self.stderrThread = None
@@ -36,6 +37,7 @@ class SNDaemon(object):
         self.snProcess = Popen(self.snDir+"BitcoinDarkd", cwd=self.snDir, stderr=PIPE, stdout=PIPE, stdin=PIPE, shell=False)
         self.snProcess.wait()
 
+        self.isRunning = True
         self.startReadline()
 
     
@@ -52,12 +54,21 @@ class SNDaemon(object):
 
     def readlineThread(self, stream):
 
-        while True:
+        retstat = True
+
+        while self.isRunning:
             ts = time.time()
             line = stream.readline()
             if line:
                 obj = {"ts":ts, "line":line}
-
+                if str(obj['line']).find("bitcoind_RPC.(http://127.0.0.1:7777): BTCD.SuperNET tim") != -1:
+                    
+                    with open("hold.txt", "a") as myfile:
+                        myfile.write(line+"\n")
+                    retstat = False
+                    self.isRunning = False
+                    break
+                    
                 with self.printoutLock:
                     self.printoutList.append(obj)
 
@@ -65,6 +76,17 @@ class SNDaemon(object):
                 for i in range(len(self.printoutSubscribers)):
                     with self.printoutSubscribers[i]['lock']:
                         self.printoutSubscribers[i]['q'].put(obj, False)
+
+        if retstat == False:
+            self.stopSN()
+            time.sleep(3)
+            try:
+                check_call(["/home/sleuth/Desktop/git/CryptoSleuth/apitesting/exit"], shell=False)
+            except:
+                pass
+            time.sleep(3)
+            self.start()
+            
 
 
     def getPrintouts(self, index=None, startTime=None, endTime=None):
@@ -109,13 +131,11 @@ class SNDaemon(object):
         try:
             check_call([self.snDir+"BitcoinDarkd", "SuperNET", json.dumps({"requestType":"stop"})], shell=False)
         except Exception as e:
-            print e
             pass    
         time.sleep(2)
         try:
             check_call([self.snDir+"BitcoinDarkd", "stop"], shell=False)
         except Exception as e:
-            print e
             pass
         time.sleep(2)
 
