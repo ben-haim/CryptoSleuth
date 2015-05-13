@@ -63,7 +63,7 @@ def initWindows():
 
     supernet = cWindow.initWindow([[curses.LINES-7,getCursesCols()],[5,0]], "supernet", None, None, None)
 
-    supernetPad = cPad(supernet, "supernetPad", [[5500,1000],[20,90],[4,88]], None, None)
+    supernetPad = cPad(supernet, "supernetPad", [[6500,1000],[20,90],[4,88]], None, None)
     supernetPad.menu = padMenu(supernetPad, [[19,87],[0,0]], [1,1], [1,1], [" "], None)
     supernetPad.menu.initDataFormat()
 
@@ -143,12 +143,38 @@ def processWindow(window):
             elif currentChild.typeWin == "testsWin":
                 barSelection = currentChild.menu.data[currentChild.userPos[1]]
                 if barSelection == "Sequence":
-                    makeoffer = MakeOffer({"snDaemon":snDaemon, "offerType":"Sell", "exchangeType":"any", "perc":"1", "user":user, "baseID":"11060861818140490423", "relID":"6854596569382794790"})
-                    makeoffer.flow()
+                    makeofferTests()
                 elif barSelection == "Cases":
                     processWindow(window)
                 elif barSelection == "Results":
                     processWindow(window)
+
+
+def makeofferTests():
+
+    global snDaemon
+    global user
+
+    obj = {}
+    obj['snDaemon'] = snDaemon
+    obj['exchangeType'] = "nxtae_nxtae"
+    obj['user'] = user
+    obj['baseID'] = "11060861818140490423"
+    obj['relID'] = "6854596569382794790"
+    obj['offerType'] = "Sell"
+    counter = 0
+
+    while counter < 10:
+
+        obj['perc'] = "1"
+        obj['filename'] = "makeoffer_"+str(counter)
+
+        makeoffer = MakeOffer(obj)
+        makeoffer.flow()
+
+        obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
+        counter += 1
+        time.sleep(1)
 
 
 if __name__ == '__main__':

@@ -53,9 +53,10 @@ class SNDaemon(object):
     def readlineThread(self, stream):
 
         while True:
+            ts = time.time()
             line = stream.readline()
             if line:
-                obj = {"ts":time.time(), "line":line}
+                obj = {"ts":ts, "line":line}
 
                 with self.printoutLock:
                     self.printoutList.append(obj)
@@ -72,6 +73,7 @@ class SNDaemon(object):
         startIndex = -1
         endIndex = -1
 
+        time.sleep(1)
         with self.printoutLock:
             for i in range(len(self.printoutList)):
                 line = self.printoutList[i]

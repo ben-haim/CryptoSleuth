@@ -20,6 +20,7 @@ class MakeOffer(object):
         self.api = API()
         self.params = None
 
+        self.filename = config['filename']
         #self.makeofferParams
         self.baseAsset = self.user.getAsset("assetID", config['baseID'])
         self.relAsset = self.user.getAsset("assetID", config['relID'])
@@ -73,6 +74,13 @@ class MakeOffer(object):
         ret = self.doMakeoffer(params)
         refTX = ret['triggerhash']
 
+        self.progress.append("Makeoffer prints...\n")
+        endTime = time.time()
+        temp = self.snDaemon.getPrintouts(None, startTime, endTime)
+        #temp = callMakeofferStream.formatStreamData()
+        for i in range(len(temp)):
+            self.progress.append(getDate(temp[i]['ts'])+": "+temp[i]['line'])
+
         self.progress.append("Getting transactions...\n")
         transactions = self.getTransactions(refTX)
 
@@ -83,11 +91,7 @@ class MakeOffer(object):
         self.checkTransactions(transactions)
 
         #self.waitForMakeoffer(callMakeofferStream, startTime)
-        #endTime = time.time()
-        #temp = self.snDaemon.getPrintouts(None, startTime, endTime)
-        #temp = callMakeofferStream.formatStreamData()
-        #for i in range(len(temp)):
-        #    self.progress.append(getDate(temp[i]['ts'])+": "+temp[i]['line'])
+
 
         #self.progress.append("Dumping to file...\n")
         self.dumpToFile(data=self.progress)
@@ -105,7 +109,7 @@ class MakeOffer(object):
                     
                 self.progress.append(getDate(printout['ts'])+": "+printout['line'])
                 index += 1
-                if time.time() - startTime > 10.0:
+                if time.time() - startTime > 5.0:
                     break
 
     def getTransactions(self, refTX):
@@ -190,8 +194,10 @@ class MakeOffer(object):
         isAsk = "version.AskOrderPlacement" in attachment
         amount = attachment['quantityQNT']
         amount = float(amount) / float(pow(10, int(decimals)))
+        price = attachment['priceNQT']
         #paramAmount = float((int(self.perc) / 100) * self.params['baseiQ']['volume'])
         paramAmount = self.perc + "~" + str(self.params['baseiQ']['volume'])
+        paramPrice = self.params['baseiQ']['price']
         isAsk = "version.AskOrderPlacement" in attachment
 
         
@@ -202,6 +208,7 @@ class MakeOffer(object):
             self.progress.append("base offer type incorrect")
 
         self.progress.append("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+        self.progress.append("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
 
 
     def checkRelTransaction(self, transaction):
@@ -211,8 +218,10 @@ class MakeOffer(object):
         isAsk = "version.AskOrderPlacement" in attachment
         amount = attachment['quantityQNT']
         amount = float(amount) / float(pow(10, int(decimals)))
+        price = attachment['priceNQT']
         #paramAmount = float((int(self.perc) / 100) * self.params['reliQ']['volume'])
         paramAmount = self.perc + "~" + str(self.params['reliQ']['volume'])
+        paramPrice = self.params['reliQ']['price']
         isAsk = "version.AskOrderPlacement" in attachment
 
         
@@ -223,7 +232,7 @@ class MakeOffer(object):
             self.progress.append("rel offertype incorrect")
 
         self.progress.append("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
-                
+        self.progress.append("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
             
 
     def getBalance(self, asset):
@@ -287,12 +296,12 @@ class MakeOffer(object):
 
         if not len(orders):
             self.progress.append("No orders in orderbook\n")
-        else:
-            for i in range(len(orders)):
-                try:
-                    self.progress.append(json.dumps(orders[i]))
-                except:
-                    self.progress.append(orders[i])
+        #else:
+        #    for i in range(len(orders)):
+        #        try:
+        #            self.progress.append(json.dumps(orders[i]))
+        #        except:
+        #            self.progress.append(orders[i])
 
         return orders
 
@@ -340,6 +349,7 @@ class MakeOffer(object):
             for key in selectedOrder:
                 obj[key] = selectedOrder[key]
             obj['perc'] = self.perc
+            #obj['volume'] = 4.0
             self.progress.append(json.dumps(obj))
 
         else:
@@ -361,7 +371,8 @@ class MakeOffer(object):
         return ret
 
 
-    def dumpToFile(self, filename="dump", data=[]):
+    def dumpToFile(self, data=[]):
+        filename = self.filename
         f = open(filename, 'w')
         for i in range(len(data)):
             try:

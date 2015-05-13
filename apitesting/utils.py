@@ -28,7 +28,7 @@ def addAssetID(assets):
 
 def getDate(ts):
 
-    return datetime.datetime.fromtimestamp(int(ts)).strftime("%H:%M:%S")
+    return datetime.datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
 
 
 def checkObj(self, key, default):

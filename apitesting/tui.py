@@ -339,7 +339,10 @@ class padMenu(menu):
             self.displayedSection[0][1] = self.parent.userPos[1]
             self.displayedSection[1][1] = self.displayedSection[0][1] + self.numDisplayedCols
 
-        self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
+        try:
+            self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
+        except:
+            self.parent.cursesObj.clear()
 
 
     def menuToBottom(self):
@@ -348,7 +351,11 @@ class padMenu(menu):
 
         self.displayedSection[1][0] = self.lastPos[0]
         self.displayedSection[0][0] = self.displayedSection[1][0] - self.numDisplayedRows
-        self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
+
+        try:
+            self.parent.cursesObj.refresh(self.displayedSection[0][0],self.displayedSection[0][1]*self.colSize, self.menuPos[0][0],self.menuPos[0][1], self.menuPos[1][0], self.menuPos[1][1])
+        except:
+            self.parent.cursesObj.clear()
 
     def updateData(self, data):
         
