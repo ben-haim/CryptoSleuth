@@ -77,15 +77,15 @@ class SNDaemon(object):
                     with self.printoutSubscribers[i]['lock']:
                         self.printoutSubscribers[i]['q'].put(obj, False)
 
-        if retstat == False:
-            self.stopSN()
-            time.sleep(3)
-            try:
-                check_call(["/home/sleuth/Desktop/git/CryptoSleuth/apitesting/exit"], shell=False)
-            except:
-                pass
-            time.sleep(3)
-            self.start()
+        #if retstat == False:
+        #    self.stopSN()
+        #    time.sleep(3)
+        #    try:
+        #        check_call(["/home/sleuth/Desktop/git/CryptoSleuth/apitesting/exit"], shell=False)
+        #    except:
+        #        pass
+        #    time.sleep(3)
+        #    self.start()
             
 
 

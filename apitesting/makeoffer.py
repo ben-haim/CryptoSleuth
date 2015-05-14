@@ -12,7 +12,6 @@ class TestCase(object):
     def __init__(self, config=None, typeCase=None, func=None, parent=None, mainHandler=None):
 
         self.typeCase = typeCase
-        self.func = func
         self.config = config
 
         self.progress = []
@@ -20,14 +19,14 @@ class TestCase(object):
         self.status = None
         self.errors = []
         self.warnings = []
-     
+        self.children = []
+
         self.titleText = ""
         self.name = ""
 
         self.childIndex = 0
         self.parent = parent
         self.siblings = []
-        self.children = []
         self.mainHandler = mainHandler
 
 
@@ -35,34 +34,10 @@ class TestCase(object):
     def removeVariable(cls, name):
         return delattr(cls, name)
 
+
     @classmethod
     def addMethod(cls, func):
         return setattr(cls, func.__name__, types.MethodType(func, cls))
-
-    def addChild(self, case):
-        index = len(self.children)
-        case.childIndex = index
-        self.children.append(case)
-        for i in range(len(self.children)):
-            if i != index:
-                self.children[i].siblings.append(case)
-
-    def run(self):
-        if self.typeCase == "handler":
-            self.runChildren()
-        elif self.typeCase == "runner":
-            #self.addMethod(globals()[self.func])
-            #getattr(self, self.func)()
-            globals()[self.func](self)
-
-
-    def runChildren(self):
-        for i in range(len(self.children)):
-            testCase = self.children[i]
-            testCase.run()
-
-    #def getResults(self):
-    #    pass
 
 
     def getTestPrints(self):
@@ -70,11 +45,95 @@ class TestCase(object):
         for i in range(len(temp)):
             self.progress.append(getDate(temp[i]['ts'])+": "+temp[i]['line'])
 
+    def addProgress(self, data):
+        filename = self.mainHandler.filename
+        f = open(filename, 'a+')
+        #for i in range(len(data)):
+        try:
+            f.write(json.dumps(data)+'\n')
+        except:
+            try:
+                f.write(str(data)+'\n')
+            except:
+                f.write('****Error dumping this line****\n')
+        f.close()
 
-class MakeOffer(TestCase):
+
+class Handler(TestCase):
+
+    def __init__(self, config=None, mainHandler=None, parent=None):
+        TestCase.__init__(self, config=config, mainHandler=mainHandler, parent=parent)
+
+        self.typeCase = "handler"
+
+
+    def run(self):
+        for i in range(len(self.children)):
+            testCase = self.children[i]
+            testCase.run()
+
+
+    def addChild(self, case):
+
+        index = len(self.children)
+        case.childIndex = index
+        case.parent = self
+        self.children.append(case)
+
+        for i in range(len(self.children)):
+            if i != index:
+                self.children[i].siblings.append(case)
+
+
+class Runner(TestCase):
+
+    def __init__(self, config=None, func=None, neededData=[], mainHandler=None, parent=None):
+        TestCase.__init__(self, config=config, mainHandler=mainHandler)
+
+        self.typeCase = "runner"
+
+        self.func = func
+        self.neededData = neededData
+
+
+        self.retLevel = 0
+        self.retMsg = ""
+        self.retData = []
+
+
+    def run(self):
+        #self.addMethod(globals()[self.func])
+        #getattr(self, self.func)()
+        prevCaseData = self.getNeededData()
+        func = globals()[self.func]
+        if prevCaseData:
+            func(self, prevCaseData)
+        else:
+            func(self)
+
+        for i in range(len(self.retData)):
+            data = self.retData[i]
+            for key in data:
+                self.mainHandler.storeData(key, data[key])
+
+
+    def getNeededData(self):
+
+        allData = {}
+
+        for i in range(len(self.neededData)):
+            data = self.mainHandler.getData(self.neededData[i])
+            allData[self.neededData[i]] = data
+
+        return allData
+
+
+
+
+class Controller(Handler):
 
     def __init__(self, config={}):
-        TestCase.__init__(self, typeCase="handler")
+        Handler.__init__(self)
         self.user = config['user']
         self.snDaemon = config['snDaemon']
         self.api = API()
@@ -96,53 +155,8 @@ class MakeOffer(TestCase):
 
         self.data = {}
 
-
-    def initCases(self):
-        if self.exchangeType == "nxtae":
-            self.numTransactions = 1
-        elif self.exchangeType == "nxtae_nxtae":
-            self.numTransactions = 3
-
-        selectOrderConfig = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmount":self.baseAmount, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
-        selectOrderCase = TestCase(config=selectOrderConfig, typeCase="handler", parent=self, mainHandler=self)
-        selectOrderHandler(selectOrderCase)
-
-        makeofferCase = TestCase(typeCase="handler", parent=self, mainHandler=self)
-        callMakeofferHandler(makeofferCase)
-
-        transactionsConfig = {"baseAsset":self.baseAsset, "relAsset":self.relAsset, "numTransactions":self.numTransactions, "offerType":self.offerType, "nxtRS":self.user.nxtRS}
-        transactionsCase = TestCase(config=transactionsConfig, typeCase="handler", parent=self, mainHandler=self)
-        transactionsHandler(transactionsCase)
-
-        self.addChild(selectOrderCase)
-        self.addChild(makeofferCase)
-        self.addChild(transactionsCase)
-
-        self.run()
-
-
-        temp = []
-        for i in range(len(self.children)):
-            child = self.children[i]
-            for s in range(len(child.children)):
-                sChild = child.children[s]
-                for ss in range(len(sChild.children)):
-                    ssChild = sChild.children[ss]
-                    for q in range(len(ssChild.progress)):
-                        temp.append(ssChild.progress[q])
-                for qq in range(len(sChild.progress)):
-                    temp.append(sChild.progress[qq])
-            for qqq in range(len(child.progress)):
-                temp.append(child.progress[qqq])
-        for qqqq in range(len(self.progress)):
-            temp.append(self.progress[qqqq])
-
-        #print temp
-
-        self.dumpToFile(data=temp)
-                        
-
     def getData(self, key):
+
         data = None
 
         if key in self.data:
@@ -154,6 +168,31 @@ class MakeOffer(TestCase):
     def storeData(self, key, data):
 
         self.data[key] = data
+
+
+    def initCases(self):
+
+        if self.exchangeType == "nxtae":
+            self.numTransactions = 1
+        elif self.exchangeType == "nxtae_nxtae":
+            self.numTransactions = 3
+
+        selectOrderConfig = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmount":self.baseAmount, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
+        selectOrderCase = Handler(config=selectOrderConfig, parent=self, mainHandler=self)
+        selectOrderHandler(selectOrderCase)
+
+        makeofferCase = Handler(parent=self, mainHandler=self)
+        callMakeofferHandler(makeofferCase)
+
+        transactionsConfig = {"baseAsset":self.baseAsset, "relAsset":self.relAsset, "numTransactions":self.numTransactions, "offerType":self.offerType, "nxtRS":self.user.nxtRS}
+        transactionsCase = Handler(config=transactionsConfig, parent=self, mainHandler=self)
+        transactionsHandler(transactionsCase)
+
+        self.addChild(selectOrderCase)
+        self.addChild(makeofferCase)
+        self.addChild(transactionsCase)
+
+        self.run()
 
 
     def dumpToFile(self, data=[]):
@@ -175,107 +214,143 @@ def selectOrderHandler(classInstance):
 
     config = classInstance.config
 
-    getOrderbookConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset']}
-    getOrderbookFunc = "getOrderbook"
-    getOrderbookCase = TestCase(func=getOrderbookFunc, config=getOrderbookConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
-    #getOrderbook.addMethod(globals()[getOrderbook.func])
+    buildOrderbookAPIParamsConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset']}
+    buildOrderbookAPIParamsNeededData = []
+    buildOrderbookAPIParamsFunc = "buildOrderbookAPIParams"
+    buildOrderbookAPIParamsCase = Runner(func=buildOrderbookAPIParamsFunc, config=buildOrderbookAPIParamsConfig, mainHandler=classInstance.mainHandler)
 
-    checkOrderbookOrdersConfig = {"offerType":config['offerType']}
-    checkOrderbookOrdersFunc = "checkOrderbookOrders"
-    checkOrderbookOrdersCase = TestCase(func=checkOrderbookOrdersFunc, config=checkOrderbookOrdersConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    doOrderbookAPICallConfig = None
+    doOrderbookAPICallNeededData = ["orderbookAPIParams"]
+    doOrderbookAPICallFunc = "doOrderbookAPICall"
+    doOrderbookAPICallCase = Runner(func=doOrderbookAPICallFunc, config=doOrderbookAPICallConfig, neededData=doOrderbookAPICallNeededData, mainHandler=classInstance.mainHandler)
+
+    getOrderbookOrdersConfig = {"offerType":config['offerType']}
+    getOrderbookOrdersNeededData = ["orderbook"]
+    getOrderbookOrdersFunc = "getOrderbookOrders"
+    getOrderbookOrdersCase = Runner(func=getOrderbookOrdersFunc, config=getOrderbookOrdersConfig, neededData=getOrderbookOrdersNeededData, mainHandler=classInstance.mainHandler)
 
     selectOrderConfig = {"exchangeType":config['exchangeType'], "baseAmount":config['baseAmount']}
+    selectOrderNeededData = ["orders"]
     selectOrderFunc = "selectOrder"
-    selectOrderCase = TestCase(func=selectOrderFunc, config=selectOrderConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    selectOrderCase = Runner(func=selectOrderFunc, config=selectOrderConfig, neededData=selectOrderNeededData, mainHandler=classInstance.mainHandler)
 
-    classInstance.addChild(getOrderbookCase) # orderbook = self.getOrderbook()
-    classInstance.addChild(checkOrderbookOrdersCase) # orders = self.checkOrderbookOrders(orderbook)
-    classInstance.addChild(selectOrderCase) # selectedOrder = self.selectOrder(orders)
+    classInstance.addChild(buildOrderbookAPIParamsCase)
+    classInstance.addChild(doOrderbookAPICallCase)
+    classInstance.addChild(getOrderbookOrdersCase)
+    classInstance.addChild(selectOrderCase)
 
     return classInstance
 
 
-def getOrderbook(classInstance):
+def buildOrderbookAPIParams(classInstance):
 
+    orderbookAPIParams = {}
+    orderbookAPIParams['requestType'] = "orderbook"
+    orderbookAPIParams['baseid'] = classInstance.config['baseAsset']['assetID']
+    orderbookAPIParams['relid'] = classInstance.config['relAsset']['assetID']
+    orderbookAPIParams['allfields'] = 1
+    orderbookAPIParams['maxdepth'] = 30
+
+    classInstance.retLevel = 0
+    classInstance.retMsg = "SUCCESS: Orderbook API params built"
+    classInstance.addProgress(classInstance.retMsg)
+
+    classInstance.retData.append({"orderbookAPIParams":orderbookAPIParams})
+
+
+def doOrderbookAPICall(classInstance, data):
+
+    orderbookAPIParams = data['orderbookAPIParams']
     orderbook = {}
-    temp = {}
-    temp['requestType'] = "orderbook"
-    temp['baseid'] = classInstance.config['baseAsset']['assetID']
-    temp['relid'] = classInstance.config['relAsset']['assetID']
-    temp['allfields'] = 1
-    temp['maxdepth'] = 30
+
+    classInstance.addProgress("Trying orderbook API call")
 
     try:
-        orderbook = classInstance.mainHandler.api.doAPICall("orderbook", temp)
+        orderbook = classInstance.mainHandler.api.doAPICall("orderbook", orderbookAPIParams)
     except:
-        classInstance.progress.append("Could not load orderbook\n")
-    else:
+        classInstance.retLevel = -1
+        classInstance.retMsg = "FAIL: Orderbook API call failed"
+        classInstance.addProgress(classInstance.retMsg)
         
-        pass
+    else:
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Orderbook API call successful"
+        classInstance.addProgress(classInstance.retMsg)
 
-    classInstance.mainHandler.storeData("orderbook", orderbook)
-    return orderbook
+    classInstance.retData.append({"orderbook":orderbook})
 
 
-def checkOrderbookOrders(classInstance):
+def getOrderbookOrders(classInstance, data):
 
-    orderbook = classInstance.mainHandler.getData("orderbook")
+    orderbook = data['orderbook']
     neededOrdersType = "bids" if classInstance.config['offerType'] == "Sell" else "asks"
     orders = []
 
     if neededOrdersType in orderbook:
+
         orders = orderbook[neededOrdersType]
 
-    if not len(orders):
-        classInstance.progress.append("No orders in orderbook\n")
+        if len(orders):
+            classInstance.retLevel = 0
+            classInstance.retMsg = "SUCCESS: " + neededOrdersType + " in orderbook"
+            classInstance.addProgress(classInstance.retMsg)
+            #for i in range(len(orders)):
+            #    try:
+            #        classInstance.progress.append(json.dumps(orders[i]))
+            #    except:
+            #        classInstance.progress.append(orders[i])
+        else:
+            classInstance.retLevel = -1
+            classInstance.retMsg = "FAIL: No " + neededOrdersType + " in orderbook"
+            classInstance.addProgress(classInstance.retMsg)
     else:
-        for i in range(len(orders)):
-            try:
-                classInstance.progress.append(json.dumps(orders[i]))
-            except:
-                classInstance.progress.append(orders[i])
-
-    classInstance.mainHandler.storeData("orders", orders)
-    return orders
+        classInstance.retLevel = -1
+        classInstance.retMsg = "FAIL: No " + neededOrdersType + " in orderbook"
+        classInstance.addProgress(classInstance.retMsg)
 
 
-def selectOrder(classInstance):
+    classInstance.retData.append({"orders":orders})
 
-    orders = classInstance.mainHandler.getData("orders")
+
+def selectOrder(classInstance, data):
+
+    orders = data['orders']
     exchangeType = classInstance.config['exchangeType']
     baseAmount = classInstance.config['baseAmount']
 
     selectedOrder = None
 
-    if len(orders):
-        for i in range(len(orders)):
-            if exchangeType != "any":
-                if orders[i]['exchange'] == exchangeType:
-                    pass
-                else:
-                    continue
-            if orders[i]['volume'] >= baseAmount:
+    for i in range(len(orders)):
+        if exchangeType != "any":
+            if orders[i]['exchange'] == exchangeType:
                 pass
             else:
-                classInstance.perc = "100"
-            
-            
-            selectedOrder = orders[i]
-            break
+                continue
+        
+        #if orders[i]['volume'] >= baseAmount:
+        #    pass
+        #else:
+        #    classInstance.perc = "100"
+        
+        
+        selectedOrder = orders[i]
+        break
 
-        if selectedOrder:
-            classInstance.progress.append("Selected Order:\n")
-            try:
-                classInstance.progress.append(json.dumps(selectedOrder))
-            except:
-                classInstance.progress.append(selectedOrder)
-        else:
-            classInstance.progress.append("No order matches matches config:\n")
+    if selectedOrder:
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Selected an order"
+        classInstance.addProgress(classInstance.retMsg)
+        
+        selectedOrderStr = json.dumps(selectedOrder)
+        classInstance.addProgress("Selected Order: " + selectedOrderStr)
+
     else:
-        classInstance.progress.append("No orders to choose from\n")
+        classInstance.retLevel = -1
+        classInstance.retMsg = "FAIL: No order matches matches config"
+        classInstance.addProgress(classInstance.retMsg)
 
-    classInstance.mainHandler.storeData("selectedOrder", selectedOrder)
-    return selectedOrder
+
+    classInstance.retData.append({"selectedOrder":selectedOrder})
 
 
 
@@ -283,51 +358,62 @@ def callMakeofferHandler(classInstance):
 
     config = classInstance.config
 
-    initMakeofferFunc = "initMakeoffer"
-    initMakeofferCase = TestCase(func=initMakeofferFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
-
-    doMakeofferFunc = "doMakeoffer"
-    doMakeofferCase = TestCase(func=doMakeofferFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
-
-    #getMakeofferPrints = TestCase("getTestPrints")
-
-    classInstance.addChild(initMakeofferCase) 
-    classInstance.addChild(doMakeofferCase) 
-    #classInstance.addChild(getMakeofferPrints)
+    buildMakeofferAPIParamsConfig = {}
+    buildMakeofferAPIParamsNeededData = ["selectedOrder"]
+    buildMakeofferAPIParamsFunc = "buildMakeofferAPIParams"
+    buildMakeofferAPIParamsCase = Runner(func=buildMakeofferAPIParamsFunc, neededData=buildMakeofferAPIParamsNeededData, mainHandler=classInstance.mainHandler)
 
 
-def initMakeoffer(classInstance):
-
-    selectedOrder = classInstance.mainHandler.getData("selectedOrder")
-    obj = {}
-
-    if selectedOrder:
-        obj['requestType'] = "makeoffer3"
-        for key in selectedOrder:
-            obj[key] = selectedOrder[key]
-        obj['perc'] = 1
-        classInstance.progress.append(json.dumps(obj))
-
-    else:
-       classInstance.progress.append("No order selected\n")
-    # params = self.initMakeoffer(selectedOrder)
-    classInstance.mainHandler.storeData("makeofferAPIParams", obj)
-    return obj    
+    doMakeofferAPICallConfig = {}
+    doMakeofferAPICallNeededData = ["makeofferAPIParams"]
+    doMakeofferAPICallFunc = "doMakeofferAPICall"
+    doMakeofferAPICallCase = Runner(func=doMakeofferAPICallFunc, neededData=doMakeofferAPICallNeededData, mainHandler=classInstance.mainHandler)
 
 
-def doMakeoffer(classInstance):
+    classInstance.addChild(buildMakeofferAPIParamsCase) 
+    classInstance.addChild(doMakeofferAPICallCase) 
 
-    params = classInstance.mainHandler.getData("makeofferAPIParams")
+
+
+def buildMakeofferAPIParams(classInstance, data):
+
+    selectedOrder = data['selectedOrder']
+
+    makeofferAPIParams = {}
+    makeofferAPIParams['requestType'] = "makeoffer3"
+    makeofferAPIParams['perc'] = "1"
+
+    for key in selectedOrder:
+        makeofferAPIParams[key] = selectedOrder[key]
+
+    classInstance.retLevel = 0
+    classInstance.retMsg = "SUCCESS: Built makeoffer params"
+    classInstance.addProgress(classInstance.retMsg)
+
+    classInstance.retData.append({"makeofferAPIParams":makeofferAPIParams})
+
+ 
+
+def doMakeofferAPICall(classInstance, data):
+
+    params = data['makeofferAPIParams']
+    makeofferAPIReturn = {}
 
     try:
-        ret = classInstance.mainHandler.api.doAPICall("makeoffer", params)
+        makeofferAPIReturn = classInstance.mainHandler.api.doAPICall("makeoffer", params)
     except:
-        ret = {}
+        classInstance.retLevel = -1
+        classInstance.retMsg = "FAIL: Makeoffer API call failed"
 
-    classInstance.progress.append(json.dumps(ret))
-    # ret = self.doMakeoffer(params)     refTX = ret['triggerhash']
-    classInstance.mainHandler.storeData("makeofferAPIReturn", ret)
-    return ret
+        classInstance.addProgress(classInstance.retMsg)
+    else:  
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Makeoffer API call succeeded"
+
+        classInstance.addProgress(classInstance.retMsg)
+        classInstance.addProgress(makeofferAPIReturn)
+
+    classInstance.retData.append({"makeofferAPIReturn":makeofferAPIReturn})
 
 
 
@@ -336,68 +422,83 @@ def transactionsHandler(classInstance):
     config = classInstance.config
 
     getTransactionsConfig = {"nxtRS":config['nxtRS'], "numTransactions":config['numTransactions']}
+    getTransactionsNeededData = ["makeofferAPIReturn"]
     getTransactionsFunc = "getTransactions"
-    getTransactionsCase = TestCase(func=getTransactionsFunc, config=getTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    getTransactionsCase = Runner(func=getTransactionsFunc, config=getTransactionsConfig, neededData=getTransactionsNeededData, mainHandler=classInstance.mainHandler)
 
     sortTransactionsConfig = {"baseAsset":config['baseAsset']}
+    sortTransactionsNeededData = ["transactions"]
     sortTransactionsFunc = "sortTransactions"
-    sortTransactionsCase = TestCase(func=sortTransactionsFunc, config=sortTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    sortTransactionsCase = Runner(func=sortTransactionsFunc, config=sortTransactionsConfig, neededData=sortTransactionsNeededData, mainHandler=classInstance.mainHandler)
 
     checkTransactionsConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset'], "offerType":config['offerType']}
-    checkTransactionsCase = TestCase(config=checkTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="handler")
+    checkTransactionsCase = Handler(config=checkTransactionsConfig, mainHandler=classInstance.mainHandler)
 
-    classInstance.addChild(getTransactionsCase) # transactions = self.getTransactions(refTX)
-    classInstance.addChild(sortTransactionsCase) # transactions = self.sortTransactions(transactions)
-    classInstance.addChild(checkTransactionsCase) # self.checkTransactions(transactions)
+    classInstance.addChild(getTransactionsCase) 
+    classInstance.addChild(sortTransactionsCase)
+    classInstance.addChild(checkTransactionsCase)
 
     checkTransactionsHandler(checkTransactionsCase)
 
 
 
-def getTransactions(classInstance):
+def getTransactions(classInstance, data):
 
-    counter = 0
-    temp = {}
-    temp['requestType'] = "getUnconfirmedTransactions"
-    temp['account'] = classInstance.config['nxtRS']
-    numTransactions = classInstance.config['numTransactions']
-    refTX = classInstance.mainHandler.getData("makeofferAPIReturn")
+    refTX = data['makeofferAPIReturn']
     refTX = refTX['triggerhash']
 
+    nxtRS = classInstance.config['nxtRS']
+    numTransactions = classInstance.config['numTransactions']
+
+    getTransactionsAPIParams = {}
+    getTransactionsAPIParams['requestType'] = "getUnconfirmedTransactions"
+    getTransactionsAPIParams['account'] = nxtRS
+
+    counter = 0
+    transactions = []
+
     while True:
+
         transactions = []
-        ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransaction", temp, True)
+        ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransactions", getTransactionsAPIParams, True)
+
         if "unconfirmedTransactions" in ret:
-            unconfs = ret['unconfirmedTransactions']
-            for i in range(len(unconfs)):
-                if "referencedTransactionFullHash" in unconfs[i]:
-                    if unconfs[i]['referencedTransactionFullHash'] == refTX:
-                        transactions.append(unconfs[i])
-                elif unconfs[i]['fullHash'] == refTX:
-                    transactions.append(unconfs[i])
+            unconfirmedTransactions = ret['unconfirmedTransactions']
+            for i in range(len(unconfirmedTransactions)):
+                if "referencedTransactionFullHash" in unconfirmedTransactions[i]:
+                    if unconfirmedTransactions[i]['referencedTransactionFullHash'] == refTX:
+                        transactions.append(unconfirmedTransactions[i])
+                elif unconfirmedTransactions[i]['fullHash'] == refTX:
+                    transactions.append(unconfirmedTransactions[i])
 
         if len(transactions) == numTransactions:
+            classInstance.retLevel = 0
+            classInstance.retMsg = "SUCCESS: All transactions found"
+            classInstance.addProgress(classInstance.retMsg)
             break
+
         if counter == 7:
-            classInstance.progress.append("failed getting transactions. num transactions = " +str(len(transactions)))
+            classInstance.retLevel = -1
+            classInstance.retMsg = "FAIL: Could not find all transactions"
+            classInstance.addProgress("failed getting transactions. num transactions = " +str(len(transactions)))
             for i in range(len(transactions)):
-                classInstance.progress.append(json.dumps(transactions[i]))
+                classInstance.addProgress(json.dumps(transactions[i]))
             break
 
         counter += 1
         time.sleep(1)
 
-    classInstance.mainHandler.storeData("transactions", transactions)
-    return transactions
+
+    classInstance.retData.append({"transactions":transactions})
 
 
 
-def sortTransactions(classInstance):
+def sortTransactions(classInstance, data):
 
-    obj = {}
-    temp = []
     baseAsset = classInstance.config['baseAsset']
-    transactions = classInstance.mainHandler.getData("transactions")
+    transactions = data['transactions']
+
+    sortedTransactions = []
 
     for i in range(len(transactions)):
         transaction = transactions[i]
@@ -410,13 +511,12 @@ def sortTransactions(classInstance):
         else:
             transaction['IDEX_TYPE'] = "fee"
 
-        classInstance.progress.append(json.dumps(transaction))
+        classInstance.addProgress(json.dumps(transaction))
 
-        temp.append(transaction)
+        sortedTransactions.append(transaction)
 
 
-    classInstance.mainHandler.storeData("sortedTransactions", temp)
-    return temp
+    classInstance.retData.append({"sortedTransactions":sortedTransactions})
 
 
 
@@ -424,16 +524,22 @@ def checkTransactionsHandler(classInstance):
 
     config = classInstance.config
 
+    checkFeeTransactionConfig = {}
+    checkFeeTransactionNeededData = ["sortedTransactions"]
     checkFeeTransactionFunc = "checkFeeTransaction"
-    checkFeeTransactionCase = TestCase(func=checkFeeTransactionFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    checkFeeTransactionCase = Runner(func=checkFeeTransactionFunc, neededData=checkFeeTransactionNeededData, mainHandler=classInstance.mainHandler)
+
 
     checkBaseTransactionConfig = {"baseAsset":config['baseAsset'], "offerType":config['offerType']}
+    checkBaseTransactionNeededData = ["sortedTransactions", "makeofferAPIParams"]
     checkBaseTransactionFunc = "checkBaseTransaction"
-    checkBaseTransactionCase = TestCase(func=checkBaseTransactionFunc, config=checkBaseTransactionConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    checkBaseTransactionCase = Runner(func=checkBaseTransactionFunc, config=checkBaseTransactionConfig, neededData=checkBaseTransactionNeededData, mainHandler=classInstance.mainHandler)
+
 
     checkRelTransactionConfig = {"relAsset":config['relAsset'], "offerType":config['offerType']}
+    checkRelTransactionNeededData = ["sortedTransactions", "makeofferAPIParams"]
     checkRelTransactionFunc = "checkRelTransaction"
-    checkRelTransactionCase = TestCase(func=checkRelTransactionFunc, config=checkRelTransactionConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+    checkRelTransactionCase = Runner(func=checkRelTransactionFunc, config=checkRelTransactionConfig, neededData=checkRelTransactionNeededData, mainHandler=classInstance.mainHandler)
 
 
     classInstance.addChild(checkFeeTransactionCase) 
@@ -442,26 +548,25 @@ def checkTransactionsHandler(classInstance):
 
         
 
-def checkFeeTransaction(classInstance):
+def checkFeeTransaction(classInstance, data):
 
-    transactions = classInstance.mainHandler.getData("sortedTransactions")
+    transactions = data['sortedTransactions']
     transaction = searchListOfObjects(transactions, "IDEX_TYPE", "fee", True)
 
     if transaction['amountNQT'] == "250000000":
-        classInstance.progress.append("fee correct")
+        classInstance.addProgress("fee correct")
     else:
-        classInstance.progress.append("fee incorrect")
+        classInstance.addProgress("fee incorrect")
 
 
-def checkBaseTransaction(classInstance):
+def checkBaseTransaction(classInstance, data):
 
     decimals = classInstance.config['baseAsset']['decimals']
     offerType = classInstance.config['offerType']
     perc = "1" #classInstance.config['perc']
 
-    params = classInstance.mainHandler.getData("makeofferAPIParams")
-    transactions = classInstance.mainHandler.getData("sortedTransactions")
-
+    params = data['makeofferAPIParams']
+    transactions = data['sortedTransactions']
     transaction = searchListOfObjects(transactions, "IDEX_TYPE", "base", True)
 
     attachment = transaction['attachment']
@@ -476,23 +581,22 @@ def checkBaseTransaction(classInstance):
 
 
     if isAsk and offerType == "Sell":
-        classInstance.progress.append("base offer type correct")
+        classInstance.addProgress("base offer type correct")
     else:
-        classInstance.progress.append("base offer type incorrect")
+        classInstance.addProgress("base offer type incorrect")
 
-    classInstance.progress.append("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
-    classInstance.progress.append("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    classInstance.addProgress("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    classInstance.addProgress("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
 
 
-def checkRelTransaction(classInstance):
+def checkRelTransaction(classInstance, data):
 
     decimals = classInstance.config['relAsset']['decimals']
     offerType = classInstance.config['offerType']
     perc = "1" #classInstance.config['perc']
 
-    params = classInstance.mainHandler.getData("makeofferAPIParams")
-    transactions = classInstance.mainHandler.getData("sortedTransactions")
-
+    params = data['makeofferAPIParams']
+    transactions = data['sortedTransactions']
     transaction = searchListOfObjects(transactions, "IDEX_TYPE", "rel", True)
 
     attachment = transaction['attachment']
@@ -508,12 +612,12 @@ def checkRelTransaction(classInstance):
 
 
     if not isAsk and offerType == "Sell":
-        classInstance.progress.append("rel offertype correct")
+        classInstance.addProgress("rel offertype correct")
     else:
-        classInstance.progress.append("rel offertype incorrect")
+        classInstance.addProgress("rel offertype incorrect")
 
-    classInstance.progress.append("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
-    classInstance.progress.append("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    classInstance.addProgress("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    classInstance.addProgress("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
         
 
 

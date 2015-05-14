@@ -174,7 +174,7 @@ def makeofferTests():
         obj['perc'] = "1"
         obj['filename'] = "makeoffer_"+str(counter)
 
-        makeoffer = MakeOffer(obj)
+        makeoffer = Controller(obj)
         makeoffer.initCases()
 
         obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
