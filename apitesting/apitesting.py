@@ -169,14 +169,14 @@ def makeofferTests():
     obj['offerType'] = "Sell"
     counter = 0
 
-    while counter < 10:
+    while counter < 1:
 
         obj['perc'] = "1"
         obj['filename'] = "makeoffer_"+str(counter)
 
         makeoffer = Controller(obj)
         makeoffer.initCases()
-
+        makeoffer.run()
         obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
         counter += 1
         time.sleep(1)

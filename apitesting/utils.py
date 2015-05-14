@@ -37,6 +37,11 @@ def getDate(ts):
     return datetime.datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")
 
 
+def getDateNoMS(ts):
+
+    return datetime.datetime.fromtimestamp(ts).strftime("%H:%M:%S")
+
+
 def checkObj(self, key, default):
     
     a = None
@@ -48,3 +53,15 @@ def checkObj(self, key, default):
 
     return a
 
+
+def toString(data):
+
+    try:
+        line = json.dumps(data)
+    except:
+        try:
+            line = str(data).rstrip('\r\n') + '\n'
+        except:
+            line = "****Error dumping this line****\n"
+
+    return line

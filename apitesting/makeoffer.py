@@ -19,7 +19,8 @@ class TestCase(object):
         self.status = None
         self.errors = []
         self.warnings = []
-        self.children = []
+        self.startTime = None
+        self.endTime = None
 
         self.titleText = ""
         self.name = ""
@@ -27,6 +28,7 @@ class TestCase(object):
         self.childIndex = 0
         self.parent = parent
         self.siblings = []
+        self.children = []
         self.mainHandler = mainHandler
 
 
@@ -47,16 +49,24 @@ class TestCase(object):
 
     def addProgress(self, data):
         filename = self.mainHandler.filename
-        f = open(filename, 'a+')
+        with open(filename, 'a+') as f:
         #for i in range(len(data)):
-        try:
-            f.write(json.dumps(data)+'\n')
-        except:
-            try:
-                f.write(str(data)+'\n')
-            except:
-                f.write('****Error dumping this line****\n')
-        f.close()
+            f.write(toString(data))
+            f.close()
+
+
+    def prependToFile(self, filename, data):
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            for i in range(len(data)):
+                line = toString(data[i])
+                f.write(line)
+            f.write(content)
+            f.close()
+
+
+
 
 
 class Handler(TestCase):
@@ -70,7 +80,11 @@ class Handler(TestCase):
     def run(self):
         for i in range(len(self.children)):
             testCase = self.children[i]
-            testCase.run()
+
+            try:
+                testCase.run()
+            except Exception as e:
+                raise e
 
 
     def addChild(self, case):
@@ -105,16 +119,67 @@ class Runner(TestCase):
         #self.addMethod(globals()[self.func])
         #getattr(self, self.func)()
         prevCaseData = self.getNeededData()
+
+        self.startingLogs(prevCaseData)
+
         func = globals()[self.func]
         if prevCaseData:
             func(self, prevCaseData)
         else:
             func(self)
 
+        self.endingLogs()
+
         for i in range(len(self.retData)):
             data = self.retData[i]
             for key in data:
                 self.mainHandler.storeData(key, data[key])
+
+        if self.retLevel == -1:
+            raise NameError("test")
+
+
+    def startingLogs(self, prevCaseData):
+
+        self.addProgress(" ")
+        self.addProgress("*"*20)
+        self.addProgress("Starting case: " + self.func)
+
+        if prevCaseData:
+            self.addProgress("Using data: ")
+            for key in prevCaseData:
+                line = key + ": " + toString(prevCaseData[key])
+                self.addProgress(line)
+
+        if self.config:
+            self.addProgress("Using config options: ")
+            for key in self.config:
+                line = key + ": " + toString(self.config[key])
+                self.addProgress(line)
+
+        self.addProgress("-"*20)
+        self.addProgress(" ")
+
+    
+    def endingLogs(self):
+
+        self.addProgress(" ")
+        self.addProgress("-"*20)
+
+        self.addProgress("Finished case: " + self.func)
+        self.addProgress("retLevel: " + str(self.retLevel))
+        self.addProgress("retMsg: " + self.retMsg)
+
+        if len(self.retData):
+            self.addProgress("Retrieved data: ")
+            for i in range(len(self.retData)):
+                data = self.retData[i]
+                for key in data:
+                    line = key + ": " + toString(data[key])
+                    self.addProgress(line)
+
+        self.addProgress("*"*20)
+        self.addProgress(" ")
 
 
     def getNeededData(self):
@@ -192,11 +257,88 @@ class Controller(Handler):
         self.addChild(makeofferCase)
         self.addChild(transactionsCase)
 
-        self.run()
 
+
+    def run(self):
+
+        self.startTime = time.time()
+        for i in range(len(self.children)):
+            testCase = self.children[i]
+
+            try:
+                testCase.run()
+            except Exception as e:
+                break
+
+        self.endTime = time.time()
+
+        self.makeOverview()
+
+
+
+    def getAllRunners(self, children):
+        for i in range(len(children)):
+            child = children[i]
+            if child.typeCase == "runner":
+                yield child
+            else:
+                for j in self.getAllRunners(child.children):
+                    yield j
+
+    def makeOverview(self):
+        allRunners = self.getAllRunners(self.children)
+        overview = []
+        
+        numRunners = 0
+        numFailed = 0
+        numComplete = 0
+
+        parsed = []
+        for runner in allRunners:
+            obj = {}
+            obj['caseName'] = runner.func
+            obj['retLevel'] = runner.retLevel
+            obj['retMsg'] = runner.retMsg
+            parsed.append(obj)
+
+            if runner.retLevel == 0:
+                numComplete += 1
+            elif runner.retLevel == -1:
+                numFailed += 1
+
+            numRunners += 1
+
+        temp = []
+        temp.append({'offerType':self.offerType})
+        temp.append({'exchangeType':self.exchangeType})
+        temp.append({'baseID':self.baseAsset['assetID']})
+        temp.append({'relID':self.relAsset['assetID']})
+
+        overview.append("*"*30)
+        overview.append("Test Name: " + self.filename)
+        overview.append("Start time: " + getDateNoMS(int(self.startTime)))
+        overview.append("End time: " + getDateNoMS(int(self.endTime)))
+        #overview.append("Elapsed time: " + time.strftime("%M:%S", time.gmtime(int(self.endTime - self.startTime))))
+        overview.append("Params: ")
+        for i in range(len(temp)):
+            for key in temp[i]:
+                overview.append("    " + key + ": " + temp[i][key])
+        overview.append("Num runners: " + str(numRunners))
+        overview.append("Num failed: " + str(numFailed) + "/" + str(numRunners))
+        overview.append("Num complete: " + str(numComplete) + "/" + str(numRunners))
+        overview.append("All runners: ")
+        for i in range(len(parsed)):
+            overview.append("    " + "Case Name: " + parsed[i]['caseName'])
+            overview.append("        " + "Ret Level: " + str(parsed[i]['retLevel'])) 
+            overview.append("        " + "Ret Message: " + parsed[i]['retMsg'])
+        overview.append("*"*30)
+        overview.append(" ")
+        overview.append(" ")
+
+        self.prependToFile(self.filename, overview)
 
     def dumpToFile(self, data=[]):
-        filename = self.filename
+        filename = "aba"
         f = open(filename, 'w')
         for i in range(len(data)):
             try:
@@ -251,9 +393,11 @@ def buildOrderbookAPIParams(classInstance):
     orderbookAPIParams['allfields'] = 1
     orderbookAPIParams['maxdepth'] = 30
 
+    classInstance.addProgress("Constructed orderbook API params:")
+    classInstance.addProgress(orderbookAPIParams)
+
     classInstance.retLevel = 0
     classInstance.retMsg = "SUCCESS: Orderbook API params built"
-    classInstance.addProgress(classInstance.retMsg)
 
     classInstance.retData.append({"orderbookAPIParams":orderbookAPIParams})
 
@@ -270,12 +414,10 @@ def doOrderbookAPICall(classInstance, data):
     except:
         classInstance.retLevel = -1
         classInstance.retMsg = "FAIL: Orderbook API call failed"
-        classInstance.addProgress(classInstance.retMsg)
         
     else:
         classInstance.retLevel = 0
         classInstance.retMsg = "SUCCESS: Orderbook API call successful"
-        classInstance.addProgress(classInstance.retMsg)
 
     classInstance.retData.append({"orderbook":orderbook})
 
@@ -291,22 +433,20 @@ def getOrderbookOrders(classInstance, data):
         orders = orderbook[neededOrdersType]
 
         if len(orders):
+
+            classInstance.addProgress("Orderbook orders:")
+            for i in range(len(orders)):
+                    classInstance.addProgress(orders[i])
+
             classInstance.retLevel = 0
             classInstance.retMsg = "SUCCESS: " + neededOrdersType + " in orderbook"
-            classInstance.addProgress(classInstance.retMsg)
-            #for i in range(len(orders)):
-            #    try:
-            #        classInstance.progress.append(json.dumps(orders[i]))
-            #    except:
-            #        classInstance.progress.append(orders[i])
         else:
             classInstance.retLevel = -1
             classInstance.retMsg = "FAIL: No " + neededOrdersType + " in orderbook"
-            classInstance.addProgress(classInstance.retMsg)
+
     else:
         classInstance.retLevel = -1
         classInstance.retMsg = "FAIL: No " + neededOrdersType + " in orderbook"
-        classInstance.addProgress(classInstance.retMsg)
 
 
     classInstance.retData.append({"orders":orders})
@@ -320,6 +460,7 @@ def selectOrder(classInstance, data):
 
     selectedOrder = None
 
+    classInstance.addProgress("Searching through orders...")
     for i in range(len(orders)):
         if exchangeType != "any":
             if orders[i]['exchange'] == exchangeType:
@@ -337,12 +478,12 @@ def selectOrder(classInstance, data):
         break
 
     if selectedOrder:
+        #selectedOrderStr = json.dumps(selectedOrder)
+        classInstance.addProgress("Selected Order: ")
+        classInstance.addProgress(selectedOrder)
+
         classInstance.retLevel = 0
         classInstance.retMsg = "SUCCESS: Selected an order"
-        classInstance.addProgress(classInstance.retMsg)
-        
-        selectedOrderStr = json.dumps(selectedOrder)
-        classInstance.addProgress("Selected Order: " + selectedOrderStr)
 
     else:
         classInstance.retLevel = -1
@@ -386,9 +527,11 @@ def buildMakeofferAPIParams(classInstance, data):
     for key in selectedOrder:
         makeofferAPIParams[key] = selectedOrder[key]
 
+    classInstance.addProgress("Constructed makeoffer API params:")
+    classInstance.addProgress(makeofferAPIParams)
+
     classInstance.retLevel = 0
     classInstance.retMsg = "SUCCESS: Built makeoffer params"
-    classInstance.addProgress(classInstance.retMsg)
 
     classInstance.retData.append({"makeofferAPIParams":makeofferAPIParams})
 
@@ -399,6 +542,7 @@ def doMakeofferAPICall(classInstance, data):
     params = data['makeofferAPIParams']
     makeofferAPIReturn = {}
 
+    classInstance.addProgress("Trying makeoffer API call")
     try:
         makeofferAPIReturn = classInstance.mainHandler.api.doAPICall("makeoffer", params)
     except:
@@ -410,8 +554,8 @@ def doMakeofferAPICall(classInstance, data):
         classInstance.retLevel = 0
         classInstance.retMsg = "SUCCESS: Makeoffer API call succeeded"
 
-        classInstance.addProgress(classInstance.retMsg)
-        classInstance.addProgress(makeofferAPIReturn)
+        #classInstance.addProgress(classInstance.retMsg)
+        #classInstance.addProgress(makeofferAPIReturn)
 
     classInstance.retData.append({"makeofferAPIReturn":makeofferAPIReturn})
 
@@ -457,19 +601,34 @@ def getTransactions(classInstance, data):
     counter = 0
     transactions = []
 
+    classInstance.addProgress("Starting transactions poll...")
+
     while True:
 
         transactions = []
-        ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransactions", getTransactionsAPIParams, True)
+        classInstance.addProgress("Trying getUnconfirmedTransactions API call...")
+        try:
+            ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransactions", getTransactionsAPIParams, True)
+        except:
+            ret = {}
+            pass
 
         if "unconfirmedTransactions" in ret:
             unconfirmedTransactions = ret['unconfirmedTransactions']
             for i in range(len(unconfirmedTransactions)):
+
                 if "referencedTransactionFullHash" in unconfirmedTransactions[i]:
                     if unconfirmedTransactions[i]['referencedTransactionFullHash'] == refTX:
                         transactions.append(unconfirmedTransactions[i])
+                        classInstance.addProgress("Found a transaction:")
+                        classInstance.addProgress(unconfirmedTransactions[i])
+
                 elif unconfirmedTransactions[i]['fullHash'] == refTX:
                     transactions.append(unconfirmedTransactions[i])
+                    classInstance.addProgress("Found a transaction:")
+                    classInstance.addProgress(unconfirmedTransactions[i])
+        else:
+            classInstance.addProgress("No unconfirmed transactions")
 
         if len(transactions) == numTransactions:
             classInstance.retLevel = 0
@@ -482,7 +641,7 @@ def getTransactions(classInstance, data):
             classInstance.retMsg = "FAIL: Could not find all transactions"
             classInstance.addProgress("failed getting transactions. num transactions = " +str(len(transactions)))
             for i in range(len(transactions)):
-                classInstance.addProgress(json.dumps(transactions[i]))
+                classInstance.addProgress(transactions[i])
             break
 
         counter += 1
@@ -502,19 +661,29 @@ def sortTransactions(classInstance, data):
 
     for i in range(len(transactions)):
         transaction = transactions[i]
+
         if "referencedTransactionFullHash" in transaction:
             attachment = transaction['attachment']
+
             if attachment['asset'] == baseAsset['assetID']:
                 transaction['IDEX_TYPE'] = "base"
+                classInstance.addProgress("Found base transaction:")
+                classInstance.addProgress(transaction)
+
             else:
                 transaction['IDEX_TYPE'] = "rel"
+                classInstance.addProgress("Found rel transaction:")
+                classInstance.addProgress(transaction)
         else:
             transaction['IDEX_TYPE'] = "fee"
+            classInstance.addProgress("Found fee transaction:")
+            classInstance.addProgress(transaction)
 
-        classInstance.addProgress(json.dumps(transaction))
 
         sortedTransactions.append(transaction)
 
+    classInstance.retLevel = 0
+    classInstance.retMsg = "OK: No checks here"
 
     classInstance.retData.append({"sortedTransactions":sortedTransactions})
 
@@ -553,10 +722,21 @@ def checkFeeTransaction(classInstance, data):
     transactions = data['sortedTransactions']
     transaction = searchListOfObjects(transactions, "IDEX_TYPE", "fee", True)
 
-    if transaction['amountNQT'] == "250000000":
-        classInstance.addProgress("fee correct")
+    if "amountNQT" in transaction:
+        if transaction['amountNQT'] == "250000000":
+            classInstance.addProgress("Fee transaction has correct fee of 250000000")
+            classInstance.retLevel = 0
+            classInstance.retMsg = "SUCCESS: Correct fee amount"
+        else:
+            classInstance.addProgress("Incorrect fee for fee transaction: " + str(transaction['amountNQT']) + ". Expected 250000000")
+            classInstance.retLevel = 1
+            classInstance.retMsg = "FAIL: Incorrect fee"
     else:
-        classInstance.addProgress("fee incorrect")
+        classInstance.addProgress("Unexpected error - could not parse fee transaction:")
+        classInstance.addProgress(transaction)
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Could not parse fee transaction"
+
 
 
 def checkBaseTransaction(classInstance, data):
@@ -581,12 +761,15 @@ def checkBaseTransaction(classInstance, data):
 
 
     if isAsk and offerType == "Sell":
-        classInstance.addProgress("base offer type correct")
+        classInstance.addProgress("Base offerType correct. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
     else:
-        classInstance.addProgress("base offer type incorrect")
+        classInstance.addProgress("Base offerType incorrect. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
 
     classInstance.addProgress("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
     classInstance.addProgress("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+
+    classInstance.retLevel = 0
+    classInstance.retMsg = "OK: Pass"
 
 
 def checkRelTransaction(classInstance, data):
@@ -610,15 +793,16 @@ def checkRelTransaction(classInstance, data):
     paramPrice = params['reliQ']['price']
 
 
-
     if not isAsk and offerType == "Sell":
-        classInstance.addProgress("rel offertype correct")
+        classInstance.addProgress("Rel offerType correct. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
     else:
-        classInstance.addProgress("rel offertype incorrect")
+        classInstance.addProgress("Rel offerType incorrect. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
 
     classInstance.addProgress("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
     classInstance.addProgress("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
-        
+
+    classInstance.retLevel = 0
+    classInstance.retMsg = "OK: Pass"
 
 
 
