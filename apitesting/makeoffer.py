@@ -120,8 +120,8 @@ class MakeOffer(TestCase):
 
         self.run()
 
-        temp = []
 
+        temp = []
         for i in range(len(self.children)):
             child = self.children[i]
             for s in range(len(child.children)):
@@ -138,6 +138,7 @@ class MakeOffer(TestCase):
             temp.append(self.progress[qqqq])
 
         #print temp
+
         self.dumpToFile(data=temp)
                         
 

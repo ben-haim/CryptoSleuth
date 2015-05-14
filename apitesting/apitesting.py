@@ -169,7 +169,7 @@ def makeofferTests():
     obj['offerType'] = "Sell"
     counter = 0
 
-    while counter < 1:
+    while counter < 10:
 
         obj['perc'] = "1"
         obj['filename'] = "makeoffer_"+str(counter)

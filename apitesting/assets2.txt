@@ -1,13 +1,67 @@
 [
     {
+        "asset": "5527630", 
+        "decimals": 8, 
+        "description": "nxt", 
+        "name": "nxt"
+    },
+    {
+        "account": "13834361499833239429", 
+        "accountRS": "NXT-F3W7-HL7Y-BESE-D8EZZ", 
+        "asset": "2892714921553533909", 
+        "decimals": 2, 
+        "description": "sleuthtest", 
+        "name": "sleuth20", 
+        "numberOfAccounts": 3, 
+        "numberOfTrades": 0, 
+        "numberOfTransfers": 2, 
+        "quantityQNT": "100000000"
+    }, 
+    {
+        "account": "13834361499833239429", 
+        "accountRS": "NXT-F3W7-HL7Y-BESE-D8EZZ", 
+        "asset": "13995071746675094813", 
+        "decimals": 4, 
+        "description": "sleuthtest", 
+        "name": "sleuth40", 
+        "numberOfAccounts": 3, 
+        "numberOfTrades": 0, 
+        "numberOfTransfers": 2, 
+        "quantityQNT": "10000000000"
+    }, 
+    {
+        "account": "13834361499833239429", 
+        "accountRS": "NXT-F3W7-HL7Y-BESE-D8EZZ", 
+        "asset": "2677462001133444117", 
+        "decimals": 0, 
+        "description": "sleuthtest", 
+        "name": "sleuth00", 
+        "numberOfAccounts": 3, 
+        "numberOfTrades": 0, 
+        "numberOfTransfers": 2, 
+        "quantityQNT": "1000000"
+    }, 
+    {
+        "account": "4334752926652064234", 
+        "accountRS": "NXT-WSHC-U9Z4-BKN6-543CS", 
+        "asset": "1989622569661755686", 
+        "decimals": 0, 
+        "description": "Cash flow:\r\nVPN-->NXT. Send vpncoin to the following address: VaaRtgxAcdRAsDpCPdSCDiYnGaVBrjvfk4, and additional message marked NXT wallet address to receiving vpn2nxt assets. After receiving vpncoin, I will send an equal number of vpn2nxt assets to the corresponding NXT address. (recharge limit: 1-5,000,000)\r\nNXT-->VPN. Buy vpn2nxt assets, then send assets to Issuing Account：NXT-WSHC-U9Z4-BKN6-543CS, and additional message marked receiving Vpncoin wallet address. After receiving assets, I will send the same amount of vpncoin to the corresponding vpncoin address.\r\nMore information, https://nxtforum.org/index.php?topic=8530.msg178516#msg178516\r\nVpncoin, www.bitnet.wang", 
+        "name": "vpn2nxt", 
+        "numberOfAccounts": 2, 
+        "numberOfTrades": 1, 
+        "numberOfTransfers": 1, 
+        "quantityQNT": "40000000"
+    }, 
+    {
         "account": "10855622491526672107", 
         "accountRS": "NXT-2DRD-6HVM-C3XX-BDRBF", 
         "asset": "16159458497017130222", 
         "decimals": 0, 
         "description": "This asset represents the whole bankroll of NXTBubble.com. For more information visit: https://nxtforum.org/index.php?topic=9045.0", 
         "name": "BankRoll", 
-        "numberOfAccounts": 17, 
-        "numberOfTrades": 16, 
+        "numberOfAccounts": 21, 
+        "numberOfTrades": 22, 
         "numberOfTransfers": 0, 
         "quantityQNT": "100000000"
     }, 
@@ -18,8 +72,8 @@
         "decimals": 0, 
         "description": "300,000 DaVinciCoin  https://nxtforum.org/asset-exchange-general/davincicoin/", 
         "name": "DAV", 
-        "numberOfAccounts": 92, 
-        "numberOfTrades": 12, 
+        "numberOfAccounts": 89, 
+        "numberOfTrades": 15, 
         "numberOfTransfers": 105, 
         "quantityQNT": "300000"
     }, 
@@ -79,7 +133,7 @@
         "description": "crypto charity with a twist", 
         "name": "4good", 
         "numberOfAccounts": 8, 
-        "numberOfTrades": 79, 
+        "numberOfTrades": 80, 
         "numberOfTransfers": 6, 
         "quantityQNT": "99999999999990000"
     }, 
@@ -211,7 +265,7 @@
         "description": "The Bit from the Block Diversified Mining Project sells Bitcoin mining power 1 Gh/s at a time. Each GH sold is back by mining power from multiple cloud mining vendors as well as Bitcoin mining hardware.", 
         "name": "BFTBMining", 
         "numberOfAccounts": 43, 
-        "numberOfTrades": 27, 
+        "numberOfTrades": 30, 
         "numberOfTransfers": 42, 
         "quantityQNT": "100000"
     }, 
@@ -390,9 +444,9 @@
         "decimals": 2, 
         "description": "Private Fund. HighRollers Only. Managed by TwinWinNerD. Details here: https://nxtforum.org/index.php?topic=7402.0", 
         "name": "TwinVnTure", 
-        "numberOfAccounts": 12, 
+        "numberOfAccounts": 13, 
         "numberOfTrades": 8, 
-        "numberOfTransfers": 36, 
+        "numberOfTransfers": 37, 
         "quantityQNT": "500000"
     }, 
     {
@@ -487,7 +541,7 @@
         "description": "SVCAR is the third Series release of BTCOR Group. \r\nIt is a leveraged play on the price of SILVER set by the COMEX - the world’s largest physical futures trading exchange. \r\nThe purpose of this vehicle is to make quick trades on the Comex Exchange at the most advantageous times, using the power of leverage on a popular Options Trading Platform. \r\nAll BTCOR 'Series Venture' parameters are located on their respective pages at the BTCOR secure website. \r\n40% of generated revenues are paid to BTCOR Asset Holders and 60% of generated revenues are paid to SVCAR Asset Holders. \r\n60% of the total asset release is held by the BTCOR Founder with the remainder available for purchase. | https://btcor.co", 
         "name": "SVCAR", 
         "numberOfAccounts": 21, 
-        "numberOfTrades": 16, 
+        "numberOfTrades": 17, 
         "numberOfTransfers": 22, 
         "quantityQNT": "1000000"
     }, 
@@ -522,8 +576,8 @@
         "decimals": 4, 
         "description": "Phoenix (PHX) is an initiative to help fund crypto startups, altcoins and other related projects. It does not pay dividends, rather it uses Net Asset Value (NAV) as a price indicator.", 
         "name": "Phoenix", 
-        "numberOfAccounts": 71, 
-        "numberOfTrades": 126, 
+        "numberOfAccounts": 61, 
+        "numberOfTrades": 139, 
         "numberOfTransfers": 59, 
         "quantityQNT": "100000000000"
     }, 
@@ -619,8 +673,8 @@
         "description": "https://asset.cryptomining.farm", 
         "name": "pos", 
         "numberOfAccounts": 51, 
-        "numberOfTrades": 53, 
-        "numberOfTransfers": 2447, 
+        "numberOfTrades": 55, 
+        "numberOfTransfers": 2486, 
         "quantityQNT": "900000000000"
     }, 
     {
@@ -667,8 +721,8 @@
         "description": "btcor is the principal structure that houses the ventures that are released under the btcor banner. An investment in btcor is an indirect investment in every single new asset. 40% of all btcor subsidiary revenues are channeled to btcor. btcor distributions are allocated as follows:……………… 75% to shareholders | 15% to development | 10% to veterans league of heroes ………..………………………………………………………. \r\nOFFICIALTHREAD https://nxtforum.org/asset-exchange-general/btcor", 
         "name": "BTCOR", 
         "numberOfAccounts": 41, 
-        "numberOfTrades": 129, 
-        "numberOfTransfers": 19, 
+        "numberOfTrades": 132, 
+        "numberOfTransfers": 20, 
         "quantityQNT": "1000000"
     }, 
     {
@@ -799,7 +853,7 @@
         "description": "GlideSec delivers groundbreaking investment returns through a series of technical methods. Please see http://www.glidesec.com for more info.", 
         "name": "glidesec", 
         "numberOfAccounts": 116, 
-        "numberOfTrades": 354, 
+        "numberOfTrades": 355, 
         "numberOfTransfers": 384, 
         "quantityQNT": "4200000"
     }, 
@@ -822,8 +876,8 @@
         "decimals": 2, 
         "description": "Liquid Technologies implements custom software solutions for trading cryptocurrency markets.  Please see http://www.liquidtech.info for more details. LIQUID ASSETS are bearer assets issued via a digitally signed certificate on the NXT AE. The issuer maintains no records of who owns the assets. Ownership is transferred by transferring the digital certificate representing a particular asset. Whoever can demonstrate ownership of the private-key securing the certificate is presumed to own the asset.", 
         "name": "LIQUID", 
-        "numberOfAccounts": 770, 
-        "numberOfTrades": 857, 
+        "numberOfAccounts": 765, 
+        "numberOfTrades": 874, 
         "numberOfTransfers": 941, 
         "quantityQNT": "10000000"
     }, 
@@ -835,7 +889,7 @@
         "description": "The daily dividend company. Please visit our discussion thread for more information.", 
         "name": "DailyTrade", 
         "numberOfAccounts": 13, 
-        "numberOfTrades": 58, 
+        "numberOfTrades": 59, 
         "numberOfTransfers": 11, 
         "quantityQNT": "100000000"
     }, 
@@ -882,8 +936,8 @@
         "decimals": 0, 
         "description": "AutoDiv3 is a weekly income fund. Objective (3.0%-6.5%) Details here: http://tiny.cc/91oisx", 
         "name": "AutoDiv3", 
-        "numberOfAccounts": 109, 
-        "numberOfTrades": 1108, 
+        "numberOfAccounts": 108, 
+        "numberOfTrades": 1109, 
         "numberOfTransfers": 31, 
         "quantityQNT": "100000000"
     }, 
@@ -1075,7 +1129,7 @@
         "description": "https://asset.cryptomining.farm", 
         "name": "CELL", 
         "numberOfAccounts": 102, 
-        "numberOfTrades": 532, 
+        "numberOfTrades": 535, 
         "numberOfTransfers": 454, 
         "quantityQNT": "1000000000"
     }, 
@@ -1122,8 +1176,8 @@
         "decimals": 0, 
         "description": "A steady stream of automatic dividends paid daily. Details here: http://tiny.cc/91oisx", 
         "name": "AutoDiv", 
-        "numberOfAccounts": 43, 
-        "numberOfTrades": 490, 
+        "numberOfAccounts": 45, 
+        "numberOfTrades": 497, 
         "numberOfTransfers": 17, 
         "quantityQNT": "155000"
     }, 
@@ -1134,8 +1188,8 @@
         "decimals": 4, 
         "description": "Diversified cloud mining asset. Details at https://nxtforum.org/asset-exchange-general/(ann)-coldhash/", 
         "name": "ColdHash", 
-        "numberOfAccounts": 57, 
-        "numberOfTrades": 238, 
+        "numberOfAccounts": 55, 
+        "numberOfTrades": 240, 
         "numberOfTransfers": 15, 
         "quantityQNT": "1000000000000"
     }, 
@@ -1182,8 +1236,8 @@
         "decimals": 4, 
         "description": "SuperNETx2 is backed 1:1 with SuperNET assets in NXT-7HAS-3W8H-BTDY-99BJE account. It will receive passthrough asset and revshare dividends that the SuperNET backing the x2 gets. Additionally it will receive an extra 5% revshare dividends, which doubles the revshare that x2 gets since there are 40803.05 x2 assets, which is 5% of SuperNET assets", 
         "name": "SuperNETx2", 
-        "numberOfAccounts": 703, 
-        "numberOfTrades": 515, 
+        "numberOfAccounts": 704, 
+        "numberOfTrades": 516, 
         "numberOfTransfers": 877, 
         "quantityQNT": "408030000"
     }, 
@@ -1218,8 +1272,8 @@
         "decimals": 4, 
         "description": "NXTCS is a callback service for developers. We will watch your account and call your defined URLs at specific events like receiving payments. You get all infos for processing in a JSON posted to your script. More details at: https://nxtforum.org/index.php?topic=6982.0", 
         "name": "NXTCS", 
-        "numberOfAccounts": 772, 
-        "numberOfTrades": 277, 
+        "numberOfAccounts": 771, 
+        "numberOfTrades": 278, 
         "numberOfTransfers": 970, 
         "quantityQNT": "100000000000"
     }, 
@@ -1291,7 +1345,7 @@
         "description": "DeBuNe, the Decentrilised Business Network, combines the power of Nxt blockchain and powerful software frameworks to a modular, agile, worldwide business network beneficial to both members and clients. Some non core DeBuNe functionalities (centralised in external websites) will require a fee to be used. Dividends will be paid starting July 2015. Info on http://debune.org", 
         "name": "DeBuNe", 
         "numberOfAccounts": 448, 
-        "numberOfTrades": 863, 
+        "numberOfTrades": 871, 
         "numberOfTransfers": 553, 
         "quantityQNT": "10000000000"
     }, 
@@ -1470,9 +1524,9 @@
         "decimals": 4, 
         "description": "SuperNET BTCD (superBTCD) is backed 100% by deposits in the BTCD multi-signature accounts generated for each user in the Multigateway SuperNET servers. Deposits made to the multi-signature accounts will automatically transfer the corresponding amount of superBTCD assets to the associated NXT account. Withdraws are automatically processed serially only when all Multigateway servers are in agreement. The balances in the multi-signature accounts will change internally and do not represent the amount of BTCD in your account, the superBTCD assets you own do. See https://multigateway.org for more information.", 
         "name": "superBTCD", 
-        "numberOfAccounts": 55, 
+        "numberOfAccounts": 58, 
         "numberOfTrades": 10, 
-        "numberOfTransfers": 176, 
+        "numberOfTransfers": 181, 
         "quantityQNT": "220000000000"
     }, 
     {
@@ -1626,8 +1680,8 @@
         "decimals": 4, 
         "description": "FIMventure makes private investments in promising enterprises and adds value to each investment. FIMventure forging and trading FIM (fork NXT). FIMventure will pay 3-5% monthly dividends in the assets or NXT it acquires, net of trading activities during the all period. Send Message NXT-USCH-VC7D-4EX3-272SG if you are seeking investment.", 
         "name": "FIMventure", 
-        "numberOfAccounts": 685, 
-        "numberOfTrades": 717, 
+        "numberOfAccounts": 684, 
+        "numberOfTrades": 721, 
         "numberOfTransfers": 2821, 
         "quantityQNT": "10000000000"
     }, 
@@ -1698,8 +1752,8 @@
         "decimals": 3, 
         "description": "Этот актив будет получать прибыль от краткосрочных и среднесрочных инвестиций в Nxt Asset Exchange активы. А также от инвестиций в другие финансовые рынки.\r\nДля успешного старта проекта,держателям этого актива,первоначально будут выплачены высокие дивиденды:\r\n21.12.2014-22.12.2014-будет выплачено 100% прибыли от вложенных средств,т.е.  количество активов nxtegregor  удвоится.\r\n29.12.2014-03.01.2014-будет выплачено 100% \r\nВ январе 2015 года,планируется выплата 50%", 
         "name": "nxtegregor", 
-        "numberOfAccounts": 1171, 
-        "numberOfTrades": 426, 
+        "numberOfAccounts": 1170, 
+        "numberOfTrades": 427, 
         "numberOfTransfers": 5798, 
         "quantityQNT": "1000000000000"
     }, 
@@ -1710,9 +1764,9 @@
         "decimals": 0, 
         "description": "The daily dividend company. Please visit our discussion thread for more information.", 
         "name": "DailyTrade", 
-        "numberOfAccounts": 4, 
+        "numberOfAccounts": 3, 
         "numberOfTrades": 31, 
-        "numberOfTransfers": 31, 
+        "numberOfTransfers": 32, 
         "quantityQNT": "20000000"
     }, 
     {
@@ -1782,8 +1836,8 @@
         "decimals": 0, 
         "description": "OpalTKN represents a holding in the future earnings of opal products.  Learn more at http://www.opal-coin.com", 
         "name": "OPALTKN", 
-        "numberOfAccounts": 907, 
-        "numberOfTrades": 722, 
+        "numberOfAccounts": 908, 
+        "numberOfTrades": 723, 
         "numberOfTransfers": 2488, 
         "quantityQNT": "15000000"
     }, 
@@ -1806,8 +1860,8 @@
         "decimals": 4, 
         "description": "SkyNET will develop decentralized AI technology using neural nets, SVM and other methods, combined with blockchain technology to create real world solutions that can be monetized. More details available at: https://nxtforum.org/index.php?topic=6826", 
         "name": "SkyNET", 
-        "numberOfAccounts": 879, 
-        "numberOfTrades": 1403, 
+        "numberOfAccounts": 878, 
+        "numberOfTrades": 1474, 
         "numberOfTransfers": 1778, 
         "quantityQNT": "10000000000"
     }, 
@@ -1843,8 +1897,8 @@
         "description": "No-fee direct mining asset. Please see our discussion thread on the forums for more information.", 
         "name": "BearMining", 
         "numberOfAccounts": 99, 
-        "numberOfTrades": 708, 
-        "numberOfTransfers": 177, 
+        "numberOfTrades": 711, 
+        "numberOfTransfers": 178, 
         "quantityQNT": "1000000000"
     }, 
     {
@@ -1926,8 +1980,8 @@
         "decimals": 0, 
         "description": "http://ltc2nXt.net :: only 18250 virtual tokens issued. Each virtual token corresponds to a value equivalent to a qasic share on ltcgear.com. “ltc2nXt2\" tokens are not redeemable for actual qasic shares. “ltc2nXt2\" tokens are not stocks, bonds or any other kind of financial instrument or security. Investors are expected to perform due diligence. For up-to-date information please check the official website: http://ltc2nxt.net/", 
         "name": "ltc2nxt2", 
-        "numberOfAccounts": 33, 
-        "numberOfTrades": 168, 
+        "numberOfAccounts": 32, 
+        "numberOfTrades": 169, 
         "numberOfTransfers": 7, 
         "quantityQNT": "18250"
     }, 
@@ -1938,8 +1992,8 @@
         "decimals": 2, 
         "description": "CryptoCoins was set up for people interested in the financial potential of crypto currencies, and willing to delegate the actual trading to professionals benefiting from a vast financial and crypto knowledge. People who already realized that the classical financial world is at risk will find in our fund one of the few solutions to protect their money while still making some profit out of it.\r\nThe main goal of CryptoCoins is to be profitable in every market situation. The fund is only dedicated to the crypto world, this means investments will only be made in crypto currencies and assets working from within this world. \r\nMore information on http://cfa-consulting.ch/en/cryptocoins", 
         "name": "CryptoCoin", 
-        "numberOfAccounts": 35, 
-        "numberOfTrades": 147, 
+        "numberOfAccounts": 34, 
+        "numberOfTrades": 148, 
         "numberOfTransfers": 37, 
         "quantityQNT": "100000000"
     }, 
@@ -1975,7 +2029,7 @@
         "description": "Jay is a decentralized plugin network described at https://nxtforum.org/jay-framework/\r\n\r\nThe potential of this technology is far ranging. Possible uses include a plugin store for downloads, multiwallet and generally allowing crypto to have a lower entry barrier due to not requiring downloading blockchains.\r\n\r\nMonetization details will be announced in the forum thread.", 
         "name": "Jay", 
         "numberOfAccounts": 1251, 
-        "numberOfTrades": 414, 
+        "numberOfTrades": 417, 
         "numberOfTransfers": 2412, 
         "quantityQNT": "10000000000"
     }, 
@@ -1986,8 +2040,8 @@
         "decimals": 4, 
         "description": "Pangea is SuperNET's decentralized poker that uses provably random numbers and will take advantage of the built in privacy features of SuperNET. 80% of revenues will be distributed to assetholders. 20% of revenues will go to marketing affiliates, with Privatebet handling the SuperNET players for Pangea.\r\n\r\nhttps://nxtforum.org/nxtventures/pangea-poker/ will have the latest information", 
         "name": "Pangea", 
-        "numberOfAccounts": 764, 
-        "numberOfTrades": 1412, 
+        "numberOfAccounts": 763, 
+        "numberOfTrades": 1415, 
         "numberOfTransfers": 1398, 
         "quantityQNT": "10000000000"
     }, 
@@ -2094,9 +2148,9 @@
         "decimals": 0, 
         "description": "https://nxtforum.org/asset-exchange-general/safehash/", 
         "name": "SafeHash", 
-        "numberOfAccounts": 16, 
-        "numberOfTrades": 240, 
-        "numberOfTransfers": 67, 
+        "numberOfAccounts": 15, 
+        "numberOfTrades": 241, 
+        "numberOfTransfers": 68, 
         "quantityQNT": "10000000"
     }, 
     {
@@ -2154,9 +2208,9 @@
         "decimals": 8, 
         "description": "Production Multigateway BTC (mgwBTC) is backed 100% by deposits in the custom multi-signature accounts generated for each user in the Multigateway production servers. Deposits made to the multi-signature accounts will automatically transfer the corresponding amount of mgwBTC assets to the associated NXT account. Withdraws are automatically processed serially only when all Multigateway servers are in agreement. The balances in the multi-signature accounts will change internally and do not represent the amount of BTC in your NXT account, the mgwBTC assets you own do. See https://multigateway.org for more information.", 
         "name": "mgwBTC", 
-        "numberOfAccounts": 120, 
-        "numberOfTrades": 2053, 
-        "numberOfTransfers": 1295, 
+        "numberOfAccounts": 118, 
+        "numberOfTrades": 2075, 
+        "numberOfTransfers": 1306, 
         "quantityQNT": "2100000000000000"
     }, 
     {
@@ -2239,8 +2293,8 @@
         "description": "Market-making fund for NXT AE: https://nxtforum.org/assets-board/mmnxt-market-making-and-arbitrage-fund-for-nxt-ae/", 
         "name": "MMNXT", 
         "numberOfAccounts": 344, 
-        "numberOfTrades": 2963, 
-        "numberOfTransfers": 490, 
+        "numberOfTrades": 2979, 
+        "numberOfTransfers": 493, 
         "quantityQNT": "50000000"
     }, 
     {
@@ -2311,7 +2365,7 @@
         "description": "Hashrate.org LTCGear Shares\r\nPlease see: http://tinyurl.com/HRLTCGear for asset information.", 
         "name": "HRLTCGear", 
         "numberOfAccounts": 187, 
-        "numberOfTrades": 1953, 
+        "numberOfTrades": 1954, 
         "numberOfTransfers": 201, 
         "quantityQNT": "100000000"
     }, 
@@ -2334,9 +2388,9 @@
         "decimals": 0, 
         "description": "Kongzi News Service", 
         "name": "KNS", 
-        "numberOfAccounts": 12, 
+        "numberOfAccounts": 13, 
         "numberOfTrades": 84, 
-        "numberOfTransfers": 20, 
+        "numberOfTransfers": 22, 
         "quantityQNT": "10000000"
     }, 
     {
@@ -2382,8 +2436,8 @@
         "decimals": 2, 
         "description": "HK Rigid Petroleum Chemical Group Limited was founded in 2003, the company set the lubricating oil research and development, sales, business wide coverage, Taiwan, Macao, Hongkong, the country, and exported to Japan, India, South Korea and other overseas areas. Fusion leading the world's outstanding enterprise management mode and China efficient kind spirit of service in a body, not only can let the customers use to lubricating material of high end, more be able to enjoy real first-class service. Over the years, we have been committed to the development of new products, long-term close cooperation with scientific research units of international NAC, Institute of petroleum, coal science research institute and other institutions. http://www.rigidlube.com", 
         "name": "RGDO", 
-        "numberOfAccounts": 1200, 
-        "numberOfTrades": 690, 
+        "numberOfAccounts": 1199, 
+        "numberOfTrades": 691, 
         "numberOfTransfers": 1892, 
         "quantityQNT": "100000000000"
     }, 
@@ -2430,8 +2484,8 @@
         "decimals": 0, 
         "description": "ltc2nxt.ihash.biz :: Each virtual token corresponds to a value equivalent to a qasic share on ltcgear.com. ltc2nXt tokens are not redeemable for actual qasic shares.\r\nltc2nXt tokens are not stocks, bonds or any other kind of financial instrument or security. Investors are expected to perform due diligence. For uptodate information please check the official website: http://ltc2nxt.ihash.biz/", 
         "name": "ltc2nXt", 
-        "numberOfAccounts": 44, 
-        "numberOfTrades": 326, 
+        "numberOfAccounts": 40, 
+        "numberOfTrades": 332, 
         "numberOfTransfers": 63, 
         "quantityQNT": "1000000"
     }, 
@@ -2442,8 +2496,8 @@
         "decimals": 0, 
         "description": "This asset is represents the right to a share in the profits from the activities of NXTinspect, you can find more information about it here https://nxtforum.org/index.php?topic=5655.msg109465#msg109465", 
         "name": "NXTInspect", 
-        "numberOfAccounts": 556, 
-        "numberOfTrades": 844, 
+        "numberOfAccounts": 552, 
+        "numberOfTrades": 852, 
         "numberOfTransfers": 1177, 
         "quantityQNT": "1000000"
     }, 
@@ -2634,9 +2688,9 @@
         "decimals": 4, 
         "description": "Official SuperNET asset, trading symbol on exchanges is UNITY \r\n\r\nOfficial BTT thread is https://bitcointalk.org/index.php?topic=762346.0 \r\n\r\nOfficial website http://supernet.org", 
         "name": "SuperNET", 
-        "numberOfAccounts": 1158, 
-        "numberOfTrades": 7716, 
-        "numberOfTransfers": 3694, 
+        "numberOfAccounts": 1159, 
+        "numberOfTrades": 7722, 
+        "numberOfTransfers": 3698, 
         "quantityQNT": "8160610000"
     }, 
     {
@@ -2706,8 +2760,8 @@
         "decimals": 1, 
         "description": "LTCshare2G provides affordable, reliable Scrypt cloud mining and will INCREASE payouts and hashrate over time. Initial hashrate is 2 GH/s mining LTC. 35% of profits will be re-invested to increase hashrate and 65% will be paid out in dividends weekly. This gives the majority of income back to investors for fast ROI and increases hashrate faster than the projected difficulty increase of LTC. This ratio could be adjusted by majority vote. 0.1 MH/s per share at launch, increasing each week. Please see https://nxtforum.org/asset-exchange-general/ann-ltcshares/ for more information and weekly profitability/dividend reports.", 
         "name": "LTCshare2G", 
-        "numberOfAccounts": 78, 
-        "numberOfTrades": 890, 
+        "numberOfAccounts": 79, 
+        "numberOfTrades": 894, 
         "numberOfTransfers": 43, 
         "quantityQNT": "200000"
     }, 
@@ -2755,7 +2809,7 @@
         "description": "www.jinnlabs.com", 
         "name": "Jinn", 
         "numberOfAccounts": 270, 
-        "numberOfTrades": 1501, 
+        "numberOfTrades": 1507, 
         "numberOfTransfers": 78, 
         "quantityQNT": "1000000"
     }, 
@@ -3162,9 +3216,9 @@
         "decimals": 2, 
         "description": "CoinoUSD is a non-dividend paying asset tied to US dollar, one CoinoUSD equals one dollar. In- and out-exchange of it is carried out at Coinomat.com. The objective of CoinoUSD is to create NXT/USD market directly on NXT asset exchange. Besides, it allows for value transfer in USD on NXT blockchain.", 
         "name": "CoinoUSD", 
-        "numberOfAccounts": 97, 
-        "numberOfTrades": 1009, 
-        "numberOfTransfers": 1081, 
+        "numberOfAccounts": 96, 
+        "numberOfTrades": 1012, 
+        "numberOfTransfers": 1082, 
         "quantityQNT": "10000000000"
     }, 
     {
@@ -3199,7 +3253,7 @@
         "description": "Scrypt Asic Advanced Shares (SAAS) aims to correct 2 significant drawbacks of mining shares/contracts. 1) diminishing returns and 2) decreasing share value.  50% of revenue generated by SAAS will be re-invested to increasing Hash rate, the other 50% will go back to shareholders via dividend payouts.  As hash rates in SAAS increase so does your dividend and therefore your share value.  All funds generated by initial share offering go directly to purchasing more Hash rate.  As of September 1st the Pool owns 211 MH Scrypt.  First dividend payout is scheduled for Monday September 15th 2014 and every Monday after.  Regular updates on Twitter @SAASonNXTAE", 
         "name": "SAAS", 
         "numberOfAccounts": 130, 
-        "numberOfTrades": 1325, 
+        "numberOfTrades": 1326, 
         "numberOfTransfers": 140, 
         "quantityQNT": "50000"
     }, 
@@ -3354,9 +3408,9 @@
         "decimals": 0, 
         "description": "Kongzi Print Shop", 
         "name": "KPS", 
-        "numberOfAccounts": 12, 
+        "numberOfAccounts": 11, 
         "numberOfTrades": 249, 
-        "numberOfTransfers": 37, 
+        "numberOfTransfers": 38, 
         "quantityQNT": "1000000"
     }, 
     {
@@ -3690,8 +3744,8 @@
         "decimals": 0, 
         "description": "nXtGen Mining is offering mining assets available immediately. Each asset is equivalent to 1 GHS worth of processing power. We will use the profits from mining to buy NXT and distribute it through dividends to all asset holders. By placing an order on this Site for Our Services, You agree to be bound by these Terms and Conditions of Service [ http://nxtmining.com/terms ]. We collect an ongoing variable hosting charge from the virtual currency product produced by all of Our Services. See Terms and Conditions for hosting charges and also for general risk information. WE RESERVE THE RIGHT TO TERMINATE ANY SERVICES WHEN IT BECOMES UNECONOMICAL FOR US OR YOU (IN OUR SOLE DECISION MAKING DISCRETION) TO CONTINUE ON WITH SUCH SERVICES BECAUSE OF CHANGES IN THE VIRTUAL CURRENCY MARKETPLACE, THE FACT MINING EQUIPMENT HAS BECOME OBSOLETE, ETC., EVEN THOUGH THERE IS NO STATED TERMINATION OR EXPIRY DATE ON ‘ASSETS’ or 'SHARES' (ALL SERVICES) WHICH YOU PURCHASE.", 
         "name": "nXtGenGHS", 
-        "numberOfAccounts": 62, 
-        "numberOfTrades": 239, 
+        "numberOfAccounts": 61, 
+        "numberOfTrades": 241, 
         "numberOfTransfers": 70, 
         "quantityQNT": "50000"
     }, 
@@ -3858,9 +3912,9 @@
         "decimals": 0, 
         "description": "This is the secondary offering of Coinomat asset. \r\nCoinomat.com is an instant cryptocurrency exchange service. in July of 2014 NXT cryptocurrency transactions have been integrated in Coinomat.com services, including NXT withdrawals to bank cards.\r\n\r\nTotal volume of the initial and secondary IPO is equal to 7000000 NXT.\r\nCoinomat.com offers its shareholders profit equal to 1.5% of the total transaction amount. Users can have access to our transactions stats here: http://coinomat.com/globalstat.php. The dividend payments are made weekly on Mondays.", 
         "name": "Coinomat1", 
-        "numberOfAccounts": 352, 
-        "numberOfTrades": 2587, 
-        "numberOfTransfers": 379, 
+        "numberOfAccounts": 354, 
+        "numberOfTrades": 2599, 
+        "numberOfTransfers": 381, 
         "quantityQNT": "3000000"
     }, 
     {
@@ -3894,9 +3948,9 @@
         "decimals": 4, 
         "description": "multigateway BTCD is backed 100% by deposits in the custom multisig accounts generated for each user. Deposits made to the multisig account will automatically transfer the corresponding amount of BTCD assets to the associated NXT account. Withdraws are automatically processed serially only when all multigateway servers are in agreement. The balances in the multisig accounts will change and do not represent the amount of BTCD in your account, the BTCD assets do. See forum for more details and fee structure. By configuring NXTservices to monitor multigateway, any NXT node will be able to track the current status of all multigateway transactions and balances. Amounts are rounded down to 4 decimals.", 
         "name": "mgwBTCD", 
-        "numberOfAccounts": 89, 
-        "numberOfTrades": 648, 
-        "numberOfTransfers": 497, 
+        "numberOfAccounts": 88, 
+        "numberOfTrades": 702, 
+        "numberOfTransfers": 499, 
         "quantityQNT": "220000000000"
     }, 
     {
@@ -4314,8 +4368,8 @@
         "decimals": 4, 
         "description": "Privatebet will allow people to make bets directly with each other in a decentralized way. It will let people create their own personal bet with a designated arbiter in addition to automatically supporting a range of standard events with betting interest, like sports betting. Privatebet will only accept crypto and no personal information will be required from its customers. It will have a fee of 1% to begin with, subject to change to adapt to market forces. The goal is to automate as much of Privatebet as possible and it is expected to be able to payout about 80% of the fees it collects as dividends. Please follow the NXTforum for more detals and up to date information.", 
         "name": "Privatebet", 
-        "numberOfAccounts": 271, 
-        "numberOfTrades": 820, 
+        "numberOfAccounts": 270, 
+        "numberOfTrades": 821, 
         "numberOfTransfers": 401, 
         "quantityQNT": "10000000000"
     }, 
@@ -4447,7 +4501,7 @@
         "description": "1. DORCS ASSETS are bearer assets issued via a digitally signed certificate\r\non the NXT AE.\r\n2. The issuer maintains no records of who owns the assets.\r\n3. Ownership is transferred by transferring the digital certificate\r\nrepresenting a particular asset.\r\n4. Whoever can demonstrate ownership of the private-key securing the\r\ncertificate is presumed to own the asset.\r\nFor a more detailed description of the Asset, please refer to http://www.dorcsgames.com/nxtaedescription/", 
         "name": "DORCS", 
         "numberOfAccounts": 146, 
-        "numberOfTrades": 396, 
+        "numberOfTrades": 397, 
         "numberOfTransfers": 96, 
         "quantityQNT": "2000000"
     }, 
@@ -4699,7 +4753,7 @@
         "description": "Coinomat.com is an instant cryptocurrency exchange service. Coinomat.com seeks external funding through virtual IPO to enhance its operating capital and implement several new services aimed at transaction volume and revenue growth.   IPO is carried out at several platforms, including NXT platform. Our mission consists in offering frictionless customer experience in the area of cryptocurrency transactions. Our business model is built on offering fixed rate services for cryptocurrency exchanges and charging premium for the transaction speed and comfort. Our competitive advantage is the current lack of similar services and our clear profit structure, based on hedging cryptocurrency volatility effects. \r\n\r\nCoinomat.com offers its shareholders profits equal to 1.5% of the total transaction amount. Users can have access to our transactions stats here: http://coinomat.com/globalstat.php\r\n\r\nThe dividend payments are made weekly.", 
         "name": "Coinomat", 
         "numberOfAccounts": 170, 
-        "numberOfTrades": 889, 
+        "numberOfTrades": 893, 
         "numberOfTransfers": 60, 
         "quantityQNT": "1000000"
     }, 
@@ -5490,8 +5544,8 @@
         "decimals": 0, 
         "description": "This asset will not pay dividends. It will contain portions of almost all of the assets that I issue, the target percentage is 10%, but actual percentage will vary. Some issues will have more than 10%, some assets I wont be able to put here. Once the assets are in this account they will probably stay there long term, but occasional changes will be made at then current market prices. You can see current hodlings at 18323612891099439610 NXT-2AHU-UXZW-K9Q2-HENLW", 
         "name": "jl777hodl", 
-        "numberOfAccounts": 508, 
-        "numberOfTrades": 3954, 
+        "numberOfAccounts": 507, 
+        "numberOfTrades": 3955, 
         "numberOfTransfers": 865, 
         "quantityQNT": "10000000"
     }, 
@@ -5670,8 +5724,8 @@
         "decimals": 0, 
         "description": "each MGW asset represents .0001% of multigateway\r\nmultigateway will generate minimal fees from deposits and withdraws of cryptos into NXT AE. It uses a separate multisig acct for each depositor. It will have ongoing server costs and to minimize the cost of depositing and withdrawing crypto assets into NXT, it will keep fees as low as possible. Currently its projected revenue source will be via auctions for listing altcoins and altcoin giveaways. Such revenues received net of operating costs will be distributed to asset holders.\r\nmultigateway isnt a non-profit, but it also isnt designed to be a massive profit generator. Any investment in multigateway will help cover operating costs and help the NXT community.", 
         "name": "MGW", 
-        "numberOfAccounts": 258, 
-        "numberOfTrades": 1880, 
+        "numberOfAccounts": 257, 
+        "numberOfTrades": 1883, 
         "numberOfTransfers": 255, 
         "quantityQNT": "1000000"
     }, 
@@ -5766,9 +5820,9 @@
         "decimals": 0, 
         "description": "Convertible to Siastock upon completion of Sia. 1 Sianote converts to 0.01% siastock. Only 1500 will be sold during pre-IPO.", 
         "name": "Sianote", 
-        "numberOfAccounts": 59, 
-        "numberOfTrades": 263, 
-        "numberOfTransfers": 70, 
+        "numberOfAccounts": 58, 
+        "numberOfTrades": 265, 
+        "numberOfTransfers": 72, 
         "quantityQNT": "10000"
     }, 
     {
@@ -5898,9 +5952,9 @@
         "decimals": 0, 
         "description": "The official cryptocurrency of the Nxt Mobile Applications Company.  \r\n\r\nOfficial newsfeed: https://twitter.com/cryptomessenger", 
         "name": "Nxttycoin", 
-        "numberOfAccounts": 4163, 
-        "numberOfTrades": 5685, 
-        "numberOfTransfers": 44539, 
+        "numberOfAccounts": 4160, 
+        "numberOfTrades": 5687, 
+        "numberOfTransfers": 44542, 
         "quantityQNT": "1000000000"
     }, 
     {
@@ -6102,8 +6156,8 @@
         "decimals": 0, 
         "description": "There are a total of 1 million InstantDEX assets. The goal of InstantDEX is to offer realtime trading of NXT, NXT assets and other cryptos. It will earn fees from commissions on the trades. By keeping costs low by using a decentralized infrastructure, it is expected to be able to distribute approximately half of revenues to asset holders.\r\n\r\nplease refer to nxtforum.org for up to date details", 
         "name": "InstantDEX", 
-        "numberOfAccounts": 379, 
-        "numberOfTrades": 2771, 
+        "numberOfAccounts": 378, 
+        "numberOfTrades": 2773, 
         "numberOfTransfers": 244, 
         "quantityQNT": "1000000"
     }, 
