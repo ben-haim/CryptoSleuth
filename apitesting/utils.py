@@ -3,7 +3,7 @@
 
 import datetime
 
-def searchListOfObjects(listOfObjects, key, val):
+def searchListOfObjects(listOfObjects, key, val, temp=False):
 
     retObjs = []
 
@@ -12,7 +12,13 @@ def searchListOfObjects(listOfObjects, key, val):
         if key in obj and obj[key] == val:
             retObjs.append(obj)
 
-    return retObjs
+    if temp:
+        if len(retObjs):
+            return retObjs[0]
+        else:
+            return {}
+    else:
+        return retObjs
 
 
 def addAssetID(assets):

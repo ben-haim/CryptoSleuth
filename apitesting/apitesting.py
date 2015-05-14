@@ -13,7 +13,7 @@ from tui import *
 from sndaemon import SNDaemon
 from daemonstream import DaemonStream, PadRefresher
 from userclass import User
-from makeoffer import MakeOffer
+from makeoffer import *
 from utils import *
 #from api import API
 
@@ -158,13 +158,14 @@ def makeofferTests():
 
     baseAsset = user.getAsset("assetID", "2892714921553533909")
     relAsset = user.getAsset("assetID", "13995071746675094813")
-
+    #baseAsset = user.getAsset("assetID", "2892714921553533909")
+    #relAsset = user.getAsset("assetID", "5527630")
     obj = {}
     obj['snDaemon'] = snDaemon
     obj['exchangeType'] = "nxtae_nxtae"
     obj['user'] = user
-    obj['baseID'] = baseAsset['assetID']
-    obj['relID'] = relAsset['assetID']
+    obj['baseID'] = "2892714921553533909"
+    obj['relID'] = "13995071746675094813"
     obj['offerType'] = "Sell"
     counter = 0
 
@@ -174,40 +175,14 @@ def makeofferTests():
         obj['filename'] = "makeoffer_"+str(counter)
 
         makeoffer = MakeOffer(obj)
-        makeoffer.init()
+        makeoffer.initCases()
 
         obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
         counter += 1
         time.sleep(1)
 
-def makeofferTest_nxtae():
+    return
 
-    global snDaemon
-    global user
-
-    baseAsset = user.getAsset("assetID", "2892714921553533909")
-    relAsset = user.getAsset("assetID", "5527630")
-
-    obj = {}
-    obj['snDaemon'] = snDaemon
-    obj['exchangeType'] = "nxtae"
-    obj['user'] = user
-    obj['baseID'] = baseAsset['assetID']
-    obj['relID'] = relAsset['assetID']
-    obj['offerType'] = "Buy"
-    counter = 0
-
-    while counter < 1:
-
-        obj['perc'] = "1"
-        obj['filename'] = "makeoffer_"+str(counter)
-
-        makeoffer = MakeOffer(obj)
-        makeoffer.nxtae_flow()
-
-        obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
-        counter += 1
-        time.sleep(1)
 
 if __name__ == '__main__':
 

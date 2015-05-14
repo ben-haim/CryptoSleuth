@@ -24,7 +24,7 @@ class TestCase(object):
         self.titleText = ""
         self.name = ""
 
-        self.sibIndex = 0
+        self.childIndex = 0
         self.parent = parent
         self.siblings = []
         self.children = []
@@ -39,8 +39,13 @@ class TestCase(object):
     def addMethod(cls, func):
         return setattr(cls, func.__name__, types.MethodType(func, cls))
 
-    #def addChild(self):
-    #    pass
+    def addChild(self, case):
+        index = len(self.children)
+        case.childIndex = index
+        self.children.append(case)
+        for i in range(len(self.children)):
+            if i != index:
+                self.children[i].siblings.append(case)
 
     def run(self):
         if self.typeCase == "handler":
@@ -69,7 +74,7 @@ class TestCase(object):
 class MakeOffer(TestCase):
 
     def __init__(self, config={}):
-        TestCase.__init__(self)
+        TestCase.__init__(self, typeCase="handler")
         self.user = config['user']
         self.snDaemon = config['snDaemon']
         self.api = API()
@@ -92,21 +97,49 @@ class MakeOffer(TestCase):
         self.data = {}
 
 
-    def init(self):
+    def initCases(self):
         if self.exchangeType == "nxtae":
             self.numTransactions = 1
         elif self.exchangeType == "nxtae_nxtae":
             self.numTransactions = 3
 
         selectOrderConfig = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmount":self.baseAmount, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
-        selectOrder = TestCase(config=selectOrderConfig, typeCase="handler", parent=self, mainHandler=self)
-        selectOrderHandler(selectOrder, selectOrderConfig)
-        selectOrder.run()
+        selectOrderCase = TestCase(config=selectOrderConfig, typeCase="handler", parent=self, mainHandler=self)
+        selectOrderHandler(selectOrderCase)
 
+        makeofferCase = TestCase(typeCase="handler", parent=self, mainHandler=self)
+        callMakeofferHandler(makeofferCase)
 
-    def flow(self):
-        self.dumpToFile(data=self.progress)
+        transactionsConfig = {"baseAsset":self.baseAsset, "relAsset":self.relAsset, "numTransactions":self.numTransactions, "offerType":self.offerType, "nxtRS":self.user.nxtRS}
+        transactionsCase = TestCase(config=transactionsConfig, typeCase="handler", parent=self, mainHandler=self)
+        transactionsHandler(transactionsCase)
 
+        self.addChild(selectOrderCase)
+        self.addChild(makeofferCase)
+        self.addChild(transactionsCase)
+
+        self.run()
+
+        temp = []
+
+        for i in range(len(self.children)):
+            child = self.children[i]
+            for s in range(len(child.children)):
+                sChild = child.children[s]
+                for ss in range(len(sChild.children)):
+                    ssChild = sChild.children[ss]
+                    for q in range(len(ssChild.progress)):
+                        temp.append(ssChild.progress[q])
+                for qq in range(len(sChild.progress)):
+                    temp.append(sChild.progress[qq])
+            for qqq in range(len(child.progress)):
+                temp.append(child.progress[qqq])
+        for qqqq in range(len(self.progress)):
+            temp.append(self.progress[qqqq])
+
+        #print temp
+        self.dumpToFile(data=temp)
+                        
 
     def getData(self, key):
         data = None
@@ -137,7 +170,9 @@ class MakeOffer(TestCase):
 
 
 
-def selectOrderHandler(classInstance, config):
+def selectOrderHandler(classInstance):
+
+    config = classInstance.config
 
     getOrderbookConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset']}
     getOrderbookFunc = "getOrderbook"
@@ -152,9 +187,9 @@ def selectOrderHandler(classInstance, config):
     selectOrderFunc = "selectOrder"
     selectOrderCase = TestCase(func=selectOrderFunc, config=selectOrderConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
 
-    classInstance.children.append(getOrderbookCase) # orderbook = self.getOrderbook()
-    classInstance.children.append(checkOrderbookOrdersCase) # orders = self.checkOrderbookOrders(orderbook)
-    classInstance.children.append(selectOrderCase) # selectedOrder = self.selectOrder(orders)
+    classInstance.addChild(getOrderbookCase) # orderbook = self.getOrderbook()
+    classInstance.addChild(checkOrderbookOrdersCase) # orders = self.checkOrderbookOrders(orderbook)
+    classInstance.addChild(selectOrderCase) # selectedOrder = self.selectOrder(orders)
 
     return classInstance
 
@@ -206,9 +241,10 @@ def checkOrderbookOrders(classInstance):
 def selectOrder(classInstance):
 
     orders = classInstance.mainHandler.getData("orders")
-    selectedOrder = None
     exchangeType = classInstance.config['exchangeType']
     baseAmount = classInstance.config['baseAmount']
+
+    selectedOrder = None
 
     if len(orders):
         for i in range(len(orders)):
@@ -242,20 +278,21 @@ def selectOrder(classInstance):
 
 
 
-def callMakeofferHandler(classInstance, config):
+def callMakeofferHandler(classInstance):
 
-    #initMakeofferConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset']}
+    config = classInstance.config
+
     initMakeofferFunc = "initMakeoffer"
-    initMakeoffer = TestCase(func=initMakeofferFunc)
+    initMakeofferCase = TestCase(func=initMakeofferFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
 
     doMakeofferFunc = "doMakeoffer"
-    doMakeoffer = TestCase(func=doMakeofferFunc)
+    doMakeofferCase = TestCase(func=doMakeofferFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
 
     #getMakeofferPrints = TestCase("getTestPrints")
 
-    classInstance.flow.append(initMakeoffer) 
-    classInstance.flow.append(doMakeoffer) 
-    #classInstance.flow.append(getMakeofferPrints)
+    classInstance.addChild(initMakeofferCase) 
+    classInstance.addChild(doMakeofferCase) 
+    #classInstance.addChild(getMakeofferPrints)
 
 
 def initMakeoffer(classInstance):
@@ -293,30 +330,42 @@ def doMakeoffer(classInstance):
 
 
 
-def checkTransactionsHandler(self, n):
+def transactionsHandler(classInstance):
 
-    getTransactions = TestCase("getTransactions")
-    sortTransactions = TestCase("sortTransactions")
-    checkTransactions = TestCase("checkTransactions")
+    config = classInstance.config
 
-    self.flow.append(initMakeoffer) # transactions = self.getTransactions(refTX)
-    self.flow.append(doMakeoffer) # transactions = self.sortTransactions(transactions)
-    self.flow.append(getMakeofferPrints) # self.checkTransactions(transactions)
+    getTransactionsConfig = {"nxtRS":config['nxtRS'], "numTransactions":config['numTransactions']}
+    getTransactionsFunc = "getTransactions"
+    getTransactionsCase = TestCase(func=getTransactionsFunc, config=getTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+
+    sortTransactionsConfig = {"baseAsset":config['baseAsset']}
+    sortTransactionsFunc = "sortTransactions"
+    sortTransactionsCase = TestCase(func=sortTransactionsFunc, config=sortTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+
+    checkTransactionsConfig = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset'], "offerType":config['offerType']}
+    checkTransactionsCase = TestCase(config=checkTransactionsConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="handler")
+
+    classInstance.addChild(getTransactionsCase) # transactions = self.getTransactions(refTX)
+    classInstance.addChild(sortTransactionsCase) # transactions = self.sortTransactions(transactions)
+    classInstance.addChild(checkTransactionsCase) # self.checkTransactions(transactions)
+
+    checkTransactionsHandler(checkTransactionsCase)
 
 
 
-def getTransactions(self, refTX):
+def getTransactions(classInstance):
+
     counter = 0
     temp = {}
-    #temp['requestType'] = "getTransaction"
-    #temp['transaction'] = txid
-    transactions = []
     temp['requestType'] = "getUnconfirmedTransactions"
-    temp['account'] = self.user.nxtRS
+    temp['account'] = classInstance.config['nxtRS']
+    numTransactions = classInstance.config['numTransactions']
+    refTX = classInstance.mainHandler.getData("makeofferAPIReturn")
+    refTX = refTX['triggerhash']
 
     while True:
         transactions = []
-        ret = self.api.doAPICall("getUnconfirmedTransaction", temp, True)
+        ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransaction", temp, True)
         if "unconfirmedTransactions" in ret:
             unconfs = ret['unconfirmedTransactions']
             for i in range(len(unconfs)):
@@ -326,104 +375,144 @@ def getTransactions(self, refTX):
                 elif unconfs[i]['fullHash'] == refTX:
                     transactions.append(unconfs[i])
 
-        if len(transactions) == self.numTransactions:
+        if len(transactions) == numTransactions:
             break
         if counter == 7:
-            self.progress.append("failed getting transactions. num transactions = " +str(len(transactions)))
+            classInstance.progress.append("failed getting transactions. num transactions = " +str(len(transactions)))
             for i in range(len(transactions)):
-                self.progress.append(json.dumps(transactions[i]))
+                classInstance.progress.append(json.dumps(transactions[i]))
             break
 
         counter += 1
         time.sleep(1)
 
+    classInstance.mainHandler.storeData("transactions", transactions)
     return transactions
 
 
-def sortTransactions(self, transactions):
+
+def sortTransactions(classInstance):
+
     obj = {}
     temp = []
+    baseAsset = classInstance.config['baseAsset']
+    transactions = classInstance.mainHandler.getData("transactions")
+
     for i in range(len(transactions)):
         transaction = transactions[i]
         if "referencedTransactionFullHash" in transaction:
             attachment = transaction['attachment']
-            if attachment['asset'] == self.baseAsset['assetID']:
+            if attachment['asset'] == baseAsset['assetID']:
                 transaction['IDEX_TYPE'] = "base"
             else:
                 transaction['IDEX_TYPE'] = "rel"
         else:
             transaction['IDEX_TYPE'] = "fee"
 
-        self.progress.append(json.dumps(transaction))
+        classInstance.progress.append(json.dumps(transaction))
 
         temp.append(transaction)
 
+
+    classInstance.mainHandler.storeData("sortedTransactions", temp)
     return temp
 
 
-def checkTransactions(self, transactions):
-    for i in range(len(transactions)):
-        transaction = transactions[i]
-        if transaction['IDEX_TYPE'] == "fee":
-            self.checkFeeTransaction(transaction)
-        elif transaction['IDEX_TYPE'] == "base":
-            self.checkBaseTransaction(transaction)
-        elif transaction['IDEX_TYPE'] == "rel":
-            self.checkRelTransaction(transaction)
+
+def checkTransactionsHandler(classInstance):
+
+    config = classInstance.config
+
+    checkFeeTransactionFunc = "checkFeeTransaction"
+    checkFeeTransactionCase = TestCase(func=checkFeeTransactionFunc, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+
+    checkBaseTransactionConfig = {"baseAsset":config['baseAsset'], "offerType":config['offerType']}
+    checkBaseTransactionFunc = "checkBaseTransaction"
+    checkBaseTransactionCase = TestCase(func=checkBaseTransactionFunc, config=checkBaseTransactionConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+
+    checkRelTransactionConfig = {"relAsset":config['relAsset'], "offerType":config['offerType']}
+    checkRelTransactionFunc = "checkRelTransaction"
+    checkRelTransactionCase = TestCase(func=checkRelTransactionFunc, config=checkRelTransactionConfig, parent=classInstance, mainHandler=classInstance.mainHandler, typeCase="runner")
+
+
+    classInstance.addChild(checkFeeTransactionCase) 
+    classInstance.addChild(checkBaseTransactionCase) 
+    classInstance.addChild(checkRelTransactionCase) 
+
         
 
-def checkFeeTransaction(self, transaction):
+def checkFeeTransaction(classInstance):
+
+    transactions = classInstance.mainHandler.getData("sortedTransactions")
+    transaction = searchListOfObjects(transactions, "IDEX_TYPE", "fee", True)
 
     if transaction['amountNQT'] == "250000000":
-        self.progress.append("fee correct")
+        classInstance.progress.append("fee correct")
     else:
-        self.progress.append("fee incorrect")
+        classInstance.progress.append("fee incorrect")
 
 
-def checkBaseTransaction(self, transaction):
+def checkBaseTransaction(classInstance):
 
-    decimals = self.baseAsset['decimals']
+    decimals = classInstance.config['baseAsset']['decimals']
+    offerType = classInstance.config['offerType']
+    perc = "1" #classInstance.config['perc']
+
+    params = classInstance.mainHandler.getData("makeofferAPIParams")
+    transactions = classInstance.mainHandler.getData("sortedTransactions")
+
+    transaction = searchListOfObjects(transactions, "IDEX_TYPE", "base", True)
+
     attachment = transaction['attachment']
     isAsk = "version.AskOrderPlacement" in attachment
+
     amount = attachment['quantityQNT']
     amount = float(amount) / float(pow(10, int(decimals)))
+    paramAmount = perc + "~" + str(params['baseiQ']['volume'])   #paramAmount = float((int(self.perc) / 100) * self.params['baseiQ']['volume'])
+
     price = attachment['priceNQT']
-    #paramAmount = float((int(self.perc) / 100) * self.params['baseiQ']['volume'])
-    paramAmount = self.perc + "~" + str(self.params['baseiQ']['volume'])
-    paramPrice = self.params['baseiQ']['price']
-    isAsk = "version.AskOrderPlacement" in attachment
+    paramPrice = params['baseiQ']['price']
 
-    if isAsk and self.offerType == "Sell":
-        self.progress.append("base offer type correct")
+
+    if isAsk and offerType == "Sell":
+        classInstance.progress.append("base offer type correct")
     else:
-        self.progress.append("base offer type incorrect")
+        classInstance.progress.append("base offer type incorrect")
 
-    self.progress.append("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
-    self.progress.append("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    classInstance.progress.append("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    classInstance.progress.append("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
 
 
-def checkRelTransaction(self, transaction):
+def checkRelTransaction(classInstance):
 
-    decimals = self.relAsset['decimals']
+    decimals = classInstance.config['relAsset']['decimals']
+    offerType = classInstance.config['offerType']
+    perc = "1" #classInstance.config['perc']
+
+    params = classInstance.mainHandler.getData("makeofferAPIParams")
+    transactions = classInstance.mainHandler.getData("sortedTransactions")
+
+    transaction = searchListOfObjects(transactions, "IDEX_TYPE", "rel", True)
+
     attachment = transaction['attachment']
     isAsk = "version.AskOrderPlacement" in attachment
+
     amount = attachment['quantityQNT']
     amount = float(amount) / float(pow(10, int(decimals)))
+    paramAmount = perc + "~" + str(params['reliQ']['volume'])  #paramAmount = float((int(self.perc) / 100) * self.params['reliQ']['volume'])
+
     price = attachment['priceNQT']
-    #paramAmount = float((int(self.perc) / 100) * self.params['reliQ']['volume'])
-    paramAmount = self.perc + "~" + str(self.params['reliQ']['volume'])
-    paramPrice = self.params['reliQ']['price']
-    isAsk = "version.AskOrderPlacement" in attachment
+    paramPrice = params['reliQ']['price']
 
-    
 
-    if not isAsk and self.offerType == "Sell":
-        self.progress.append("rel offertype correct")
+
+    if not isAsk and offerType == "Sell":
+        classInstance.progress.append("rel offertype correct")
     else:
-        self.progress.append("rel offertype incorrect")
+        classInstance.progress.append("rel offertype incorrect")
 
-    self.progress.append("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
-    self.progress.append("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    classInstance.progress.append("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    classInstance.progress.append("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
         
 
 
