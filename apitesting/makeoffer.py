@@ -511,7 +511,7 @@ def getTransactions(classInstance, data):
         classInstance.addProgress("Loop try #" + str(counter))
 
         transactions = []
-        classInstance.addProgress("Trying getUnconfirmedTransactions API call...")
+        classInstance.addProgress("Trying getUnconfirmedTransactions API call...", indent=4)
 
         try:
             ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransactions", getTransactionsAPIParams, True)
@@ -519,24 +519,29 @@ def getTransactions(classInstance, data):
             if counter == 7:
                 classInstance.retLevel = -1
                 classInstance.retMsg = "FAIL: getUnconfirmedTransactions API call failed "
-            classInstance.addProgress("getUnconfirmedTransactions API call failed...")
+                break
+            classInstance.addProgress("getUnconfirmedTransactions API call failed...", indent=4)
             ret = {}
         else:
             if "unconfirmedTransactions" in ret:
                 unconfirmedTransactions = ret['unconfirmedTransactions']
+                classInstance.addProgress("Got " + str(len(unconfirmedTransactions)) + " unconfirmed transactions", indent=4)
                 for i in range(len(unconfirmedTransactions)):
                     if "referencedTransactionFullHash" in unconfirmedTransactions[i]:
                         if unconfirmedTransactions[i]['referencedTransactionFullHash'] == refTX:
                             transactions.append(unconfirmedTransactions[i])
-                            classInstance.addProgress("Found a transaction:")
-                            classInstance.addProgress(unconfirmedTransactions[i])
+                            classInstance.addProgress("Found a transaction:", indent=4)
+                            classInstance.addProgress(unconfirmedTransactions[i], indent=8)
 
                     elif unconfirmedTransactions[i]['fullHash'] == refTX:
                         transactions.append(unconfirmedTransactions[i])
-                        classInstance.addProgress("Found a transaction:")
-                        classInstance.addProgress(unconfirmedTransactions[i])
+                        classInstance.addProgress("Found a transaction:", indent=4)
+                        classInstance.addProgress(unconfirmedTransactions[i], indent=8)
+
+                classInstance.addProgress("Found " + str(len(transactions)) + " transactions. Need " + str(numTransactions), indent=4)
             else:
-                classInstance.addProgress("No unconfirmed transactions")
+                classInstance.addProgress("No unconfirmed transactions", indent=4)
+
 
         if len(transactions) == numTransactions:
             classInstance.retLevel = 0
