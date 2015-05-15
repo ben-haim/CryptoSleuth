@@ -232,7 +232,7 @@ def checkBaseTransactionHandler(classInstance):
 
 
     checkBaseTransactionPrice_Config = {"baseAsset":config['baseAsset']}
-    checkBaseTransactionPrice_NeededData = ["baseTransaction", "makeofferAPIParams"]
+    checkBaseTransactionPrice_NeededData = ["baseTransaction", "makeofferAPIReturn"]
     checkBaseTransactionPrice_Func = "checkBaseTransactionPrice"
     checkBaseTransactionPrice_Case = Runner(func=checkBaseTransactionPrice_Func, config=checkBaseTransactionPrice_Config, neededData=checkBaseTransactionPrice_NeededData, mainHandler=classInstance.mainHandler)
 
@@ -260,7 +260,7 @@ def checkRelTransactionHandler(classInstance):
 
 
     checkRelTransactionPrice_Config = {"relAsset":config['relAsset']}
-    checkRelTransactionPrice_NeededData = ["relTransaction", "makeofferAPIParams"]
+    checkRelTransactionPrice_NeededData = ["relTransaction", "makeofferAPIReturn"]
     checkRelTransactionPrice_Func = "checkRelTransactionPrice"
     checkRelTransactionPrice_Case = Runner(func=checkRelTransactionPrice_Func, config=checkRelTransactionPrice_Config, neededData=checkRelTransactionPrice_NeededData, mainHandler=classInstance.mainHandler)
 
@@ -430,7 +430,7 @@ def selectOrder(classInstance, data):
     classInstance.addProgress(selectedOrder, indent=4)
 
     classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Selected an order"
+    classInstance.retMsg = "SUCCESS: Selected an order"
 
     classInstance.retData.append({"selectedOrder":selectedOrder})
 
@@ -635,7 +635,7 @@ def checkFeeTransaction(classInstance, data):
 
 
 ################    CHECK BASE TRANSACTION    ################
-### fix these hoW
+### merge base rel
 
 
 def checkBaseTransactionOrderType(classInstance, data):
@@ -705,21 +705,38 @@ def checkBaseTransactionAmount(classInstance, data):
 
 def checkBaseTransactionPrice(classInstance, data):
 
-    params = data['makeofferAPIParams']
+    assetID = classInstance.config['baseAsset']['assetID']
+    decimals = classInstance.config['baseAsset']['decimals']
+    makeofferRet = data['makeofferAPIReturn']
+
     attachment = data['baseTransaction']['attachment']
 
-    price = attachment['priceNQT']
-    paramPrice = params['baseiQ']['price']
+    transactionPriceNQT = attachment['priceNQT']
 
-    classInstance.addProgress("BASE PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    if "buyer2" in makeofferRet and makeofferRet['buyer2']['assetid'] == assetID:
+        makeofferPriceNQT = str(makeofferRet['buyer2']['priceNQT'])
+    elif "seller" in makeofferRet and makeofferRet['seller']['assetid'] == assetID:
+        makeofferPriceNQT = str(makeofferRet['seller']['priceNQT'])
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Unexpected error - check makeofferAPIReturn"
+        return
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
+    if int(transactionPriceNQT) == int(makeofferPriceNQT):
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Base transaction price equals makeoffer base price"
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Base transaction price does not equal makeoffer base price: " + str(transactionPriceNQT) + " vs. " + str(makeofferPriceNQT)
+
+    #makeofferPriceNQT = float(makeofferPrice) * float(pow(10, 8 - int(decimals)))
+
+    classInstance.addProgress("Transaction price NQT: " + str(transactionPriceNQT) + ". Makeoffer base price: " + str(makeofferPriceNQT))
 
 
 
 ################    CHECK REL TRANSACTION    ################
-### fix these hoW
+### merge base rel
 
 def checkRelTransactionOrderType(classInstance, data):
 
@@ -770,7 +787,7 @@ def checkRelTransactionAmount(classInstance, data):
 
     if int(transactionAmountQNT) == int(makeofferAmountQNT_WithPerc_Float):
         classInstance.retLevel = 0
-        classInstance.retMsg = "SUCCESS: Rel transaction amount matches makeoffer return amount"
+        classInstance.retMsg = "SUCCESS: Rel transaction amount equals makeoffer return amount"
     else:
         classInstance.retLevel = 1
         classInstance.retMsg = "FAIL: Rel transaction amount does not equal makeoffer rel amount: " + str(int(transactionAmountQNT)) + " vs. " + str(int(makeofferAmountQNT_WithPerc_Float))
@@ -788,16 +805,35 @@ def checkRelTransactionAmount(classInstance, data):
 
 def checkRelTransactionPrice(classInstance, data):
 
-    params = data['makeofferAPIParams']
+    assetID = classInstance.config['relAsset']['assetID']
+    decimals = classInstance.config['relAsset']['decimals']
+    makeofferRet = data['makeofferAPIReturn']
+
     attachment = data['relTransaction']['attachment']
 
-    price = attachment['priceNQT']
-    paramPrice = params['reliQ']['price']
+    transactionPriceNQT = attachment['priceNQT']
 
-    classInstance.addProgress("REL PRICE: " + str(paramPrice) + " --- ACTUAL PRICE: " + str(price))
+    if "buyer2" in makeofferRet and makeofferRet['buyer2']['assetid'] == assetID:
+        makeofferPriceNQT = str(makeofferRet['buyer2']['priceNQT'])
+    elif "seller" in makeofferRet and makeofferRet['seller']['assetid'] == assetID:
+        makeofferPriceNQT = str(makeofferRet['seller']['priceNQT'])
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Unexpected error - check makeofferAPIReturn"
+        return
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
+    if int(transactionPriceNQT) == int(makeofferPriceNQT):
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Rel transaction price equals makeoffer rel price"
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Rel transaction price does not equal makeoffer rel price: " + str(transactionPriceNQT) + " vs. " + str(makeofferPriceNQT)
+
+    #makeofferPriceNQT = float(makeofferPrice) * float(pow(10, 8 - int(decimals)))
+
+    classInstance.addProgress("Transaction price NQT: " + str(transactionPriceNQT) + ". Makeoffer ret price: " + str(makeofferPriceNQT))
+
+
 
 
 
