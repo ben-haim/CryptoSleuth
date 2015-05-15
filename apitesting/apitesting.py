@@ -158,31 +158,42 @@ def makeofferTests():
 
     baseAsset = user.getAsset("assetID", "2892714921553533909")
     relAsset = user.getAsset("assetID", "13995071746675094813")
-    #baseAsset = user.getAsset("assetID", "2892714921553533909")
-    #relAsset = user.getAsset("assetID", "5527630")
-    obj = {}
-    obj['snDaemon'] = snDaemon
-    obj['exchangeType'] = "nxtae_nxtae"
-    obj['user'] = user
-    obj['baseID'] = "2892714921553533909"
-    obj['relID'] = "13995071746675094813"
-    obj['offerType'] = "Sell"
+
+
     counter = 0
+
+    config = {
+        "baseAsset": baseAsset,
+        "baseAmount": 0,
+        "minBaseAmount": 0,
+        "relAsset": relAsset,
+        "relAmount": 0,
+        "minRelAmount": 0,
+        "perc": 1,
+        "offerType": "Sell",
+        "exchangeType": "nxtae_nxtae"
+        #"isExternalExchange": {"value":None, "default":None}
+    }
 
     while counter < 1:
 
-        obj['perc'] = "1"
-        obj['filename'] = "makeoffer_"+str(counter)
+        config['perc'] = "1"
+        filename = "makeoffer_"+str(counter)
 
-        makeoffer = Controller(obj)
+        makeoffer = Makeoffer(config=config, filename=filename, user=user, snDaemon=snDaemon)
         makeoffer.initCases()
         makeoffer.run()
-        obj['offerType'] = "Sell" if obj['offerType'] == "Buy" else "Buy"
+
+        config['offerType'] = "Sell" if config['offerType'] == "Buy" else "Buy"
         counter += 1
         time.sleep(1)
 
-    return
 
+    #window = allWindows['supernet']
+    #pad = window.children["pads"]["progressPad"]
+    #t = Thread(target=caseRefresher)
+    #t.daemon = True
+    #t.start()
 
 if __name__ == '__main__':
 

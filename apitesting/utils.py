@@ -41,13 +41,17 @@ def getDateNoMS(ts):
 
     return datetime.datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
+def getTimer(ts):
 
-def checkObj(self, key, default):
+    return time.strftime("%M:%S", time.gmtime(ts))
+
+
+def checkObj(config, key, default):
     
     a = None
 
-    if key in self.config:
-        a = self.config[key]
+    if key in config:
+        a = config[key]
     else:
         a = default
 
@@ -65,3 +69,14 @@ def toString(data):
             line = "****Error dumping this line****\n"
 
     return line
+
+
+def prependToFile(filename, data):
+    with open(filename, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        for i in range(len(data)):
+            line = toString(data[i])
+            f.write(line)
+        f.write(content)
+        f.close()
