@@ -16,6 +16,7 @@ class Makeoffer(Controller):
 
         self.baseAsset = checkObj(config, "baseAsset", None)
         self.baseAmount = checkObj(config, "baseAmount", 0)
+        self.baseAmountDecimals = checkObj(config, "baseAmountDecimals", None)
         self.minBaseAmount = checkObj(config, "minBaseAmount", 0)
 
         self.relAsset = checkObj(config, "relAsset", None)
@@ -62,7 +63,7 @@ class Makeoffer(Controller):
         getOrders_Case = Handler(config=getOrders_Config, parent=self, mainHandler=self)
         getOrdersHandler(getOrders_Case)
 
-        selectOrder_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmount":self.baseAmount, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
+        selectOrder_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmountDecimals":self.baseAmountDecimals, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
         selectOrder_Case = Handler(config=selectOrder_Config, parent=self, mainHandler=self)
         selectOrderHandler(selectOrder_Case)
 
@@ -123,19 +124,21 @@ def selectOrderHandler(classInstance):
     parseOrdersByExchange_Func = "parseOrdersByExchange"
     parseOrdersByExchange_Case = Runner(func=parseOrdersByExchange_Func, config=parseOrdersByExchange_Config, neededData=parseOrdersByExchange_NeededData, mainHandler=classInstance.mainHandler)
 
-
-    parseOrdersByAmount_Config = {"baseAmount":config['baseAmount']}
-    parseOrdersByAmount_NeededData = ["parsedOrdersByExchange"]
-    parseOrdersByAmount_Func = "parseOrdersByAmount"
-    #parseOrdersByExchange_Case = Runner(func=parseOrdersByAmount_Func, config=parseOrdersByAmount_Config, neededData=parseOrdersByAmount_NeededData, mainHandler=classInstance.mainHandler)
-
+    #bad
+    if config['baseAmountDecimals'] is not None:
+        parseOrdersByBaseAmountDecimals_Config = {"baseAmountDecimals":config['baseAmountDecimals'], "baseAsset":config['baseAsset']}
+        parseOrdersByBaseAmountDecimals_NeededData = ["parsedOrdersByExchange"]
+        parseOrdersByBaseAmountDecimals_Func = "parseOrdersByBaseAmountDecimals"
+        parseOrdersByBaseAmountDecimals_Case = Runner(func=parseOrdersByBaseAmountDecimals_Func, config=parseOrdersByBaseAmountDecimals_Config, neededData=parseOrdersByBaseAmountDecimals_NeededData, mainHandler=classInstance.mainHandler)
 
     selectOrder_Config = {}
-    selectOrder_NeededData = ["parsedOrdersByExchange"]
+    selectOrder_NeededData = ["lastParsedOrdersName"]
     selectOrder_Func = "selectOrder"
     selectOrder_Case = Runner(func=selectOrder_Func, config=selectOrder_Config, neededData=selectOrder_NeededData, mainHandler=classInstance.mainHandler)
 
     classInstance.addChild(parseOrdersByExchange_Case)
+    if config['baseAmountDecimals'] is not None:
+        classInstance.addChild(parseOrdersByBaseAmountDecimals_Case)
     classInstance.addChild(selectOrder_Case)
 
 
@@ -397,34 +400,90 @@ def parseOrdersByExchange(classInstance, data):
         classInstance.retMsg = "FAIL: No orders matched exchangeType"
 
 
+    classInstance.retData.append({"lastParsedOrdersName":"parsedOrdersByExchange"})
     classInstance.retData.append({"parsedOrdersByExchange":parsedOrders})
 
 
 
-def parseOrdersByAmount(classInstance, data):
+def parseOrdersByBaseAmountDecimals(classInstance, data):
+
+    baseAssetDecimals = classInstance.config['baseAsset']['decimals']
+    baseAmountDecimals = classInstance.config['baseAmountDecimals']
 
     orders = data['parsedOrdersByExchange']
-    baseAmount = classInstance.config['baseAmount']
 
+    #decimalPlaces = decimal.Decimal(10) ** (-abs(int(decimals)))
     parsedOrders = []
+    qntDecimals = 8 - int(baseAssetDecimals)
 
-    classInstance.addProgress("Searching for orders with exchange: " + exchangeType + "...")
+    for i in range(len(orders)):
+
+        perc = 1
+        order = orders[i]
+
+        while perc <= 100:
+
+            numTrailingZeroes = 0
+            stringLength = 0
+
+            percMultiplier = float(perc) / float(100)
+            makeofferAmountQNT_Raw = str(order['baseamount'])
+            makeofferAmountQNT_Float = float(makeofferAmountQNT_Raw) / float(pow(10, qntDecimals))
+            makeofferAmountQNT_WithPerc_Float = percMultiplier * makeofferAmountQNT_Float
+            makeofferAmountQNT_Str = str(int(makeofferAmountQNT_WithPerc_Float))
+
+            stringLength = len(makeofferAmountQNT_Str)
+
+            counter = 0
+            for char in reversed(makeofferAmountQNT_Str):
+                if counter == baseAssetDecimals:
+                    break
+                if char == "0":
+                    numTrailingZeroes += 1
+                else:
+                    break
+                counter += 1
+
+            numDecimals = baseAssetDecimals - numTrailingZeroes
+
+            if numDecimals == int(baseAmountDecimals):
+                parsedOrders.append({"order":order, "perc":str(perc)})
+                break
+
+            perc += 1
 
 
-    #if orders[i]['volume'] >= baseAmount:
-    #    pass
-    #else:
-    #    classInstance.perc = "100"
-    
+    if len(parsedOrders):
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Found orders with correct amount decimals"
+    else:
+        classInstance.retLevel = -1
+        classInstance.retMsg = "FAIL: No orders that would lead to correct decimals in base amount"
+
+
+
+    #classInstance.addProgress("Searching for orders with exchange: " + exchangeType + "...")
+
+
+
+    classInstance.retData.append({"lastParsedOrdersName":"parsedOrdersByAmount"})
     classInstance.retData.append({"parsedOrdersByAmount":parsedOrders})
 
 
 
+#bad
 def selectOrder(classInstance, data):
 
-    parsedOrders = data['parsedOrdersByExchange']
+    parsedOrdersName = data['lastParsedOrdersName']
+    parsedOrders = classInstance.mainHandler.getData(parsedOrdersName)
 
-    selectedOrder = parsedOrders[0]
+    if parsedOrdersName == "parsedOrdersByAmount":
+        classInstance.mainHandler.config['perc'] = parsedOrders[0]['perc']
+        classInstance.mainHandler.perc = parsedOrders[0]['perc']
+        selectedOrder = parsedOrders[0]['order']
+
+    else:
+        selectedOrder = parsedOrders[0]
 
     classInstance.addProgress("Selected an order from " + str(len(parsedOrders)) + " orders:")
     classInstance.addProgress(selectedOrder, indent=4)
@@ -445,7 +504,7 @@ def buildMakeofferAPIParams(classInstance, data):
 
     makeofferAPIParams = {}
     makeofferAPIParams['requestType'] = "makeoffer3"
-    makeofferAPIParams['perc'] = "1"
+    makeofferAPIParams['perc'] = classInstance.mainHandler.perc
 
     for key in selectedOrder:
         makeofferAPIParams[key] = selectedOrder[key]

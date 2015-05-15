@@ -165,6 +165,7 @@ def makeofferTests():
     config = {
         "baseAsset": baseAsset,
         "baseAmount": 0,
+        "baseAmountDecimals": None,
         "minBaseAmount": 0,
         "relAsset": relAsset,
         "relAmount": 0,
@@ -175,18 +176,22 @@ def makeofferTests():
         #"isExternalExchange": {"value":None, "default":None}
     }
 
-    while counter < 8:
+    while counter < 1:
 
-        #config['perc'] = "1"
-        filename = "makeoffer_"+str(counter)
+        baseAmountDecimals = 0
+        while baseAmountDecimals <= int(baseAsset['decimals']):
+            #config['perc'] = "1"
+            config['baseAmountDecimals'] = baseAmountDecimals
+            filename = "makeoffer_"+str(counter)
 
-        makeoffer = Makeoffer(config=config, filename=filename, user=user, snDaemon=snDaemon)
-        makeoffer.initCases()
-        makeoffer.run()
+            makeoffer = Makeoffer(config=config, filename=filename, user=user, snDaemon=snDaemon)
+            makeoffer.initCases()
+            makeoffer.run()
 
-        config['offerType'] = "Sell" if config['offerType'] == "Buy" else "Buy"
-        counter += 1
-        time.sleep(1)
+            config['offerType'] = "Sell" if config['offerType'] == "Buy" else "Buy"
+            baseAmountDecimals += 1
+            time.sleep(1)
+            counter += 1
 
 
     #window = allWindows['supernet']
