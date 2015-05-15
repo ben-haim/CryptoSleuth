@@ -175,9 +175,9 @@ def makeofferTests():
         #"isExternalExchange": {"value":None, "default":None}
     }
 
-    while counter < 1:
+    while counter < 8:
 
-        config['perc'] = "1"
+        #config['perc'] = "1"
         filename = "makeoffer_"+str(counter)
 
         makeoffer = Makeoffer(config=config, filename=filename, user=user, snDaemon=snDaemon)

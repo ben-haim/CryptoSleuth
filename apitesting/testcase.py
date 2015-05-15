@@ -229,15 +229,16 @@ class Controller(Handler):
         numWarnings = 0
 
         for runner in allRunners:
-            if runner.retLevel == 0:
-                numSuccess += 1
-            elif runner.retLevel == -1:
-                numFailed += 1
-            else:
-                numWarnings += 1
 
             if runner.finished == 1:
                 numFinished += 1
+
+                if runner.retLevel == 0:
+                    numSuccess += 1
+                elif runner.retLevel == -1:
+                    numFailed += 1
+                else:
+                    numWarnings += 1
 
             numRunners += 1
 

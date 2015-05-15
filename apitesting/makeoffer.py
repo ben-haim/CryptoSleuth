@@ -516,7 +516,7 @@ def getTransactions(classInstance, data):
         try:
             ret = classInstance.mainHandler.api.doAPICall("getUnconfirmedTransactions", getTransactionsAPIParams, True)
         except:
-            if counter == 7:
+            if counter == 8:
                 classInstance.retLevel = -1
                 classInstance.retMsg = "FAIL: getUnconfirmedTransactions API call failed "
                 break
@@ -549,7 +549,7 @@ def getTransactions(classInstance, data):
             classInstance.addProgress(classInstance.retMsg)
             break
 
-        if counter == 7:
+        if counter == 8:
             classInstance.retLevel = -1
             classInstance.retMsg = "FAIL: Could not find all transactions"
             classInstance.addProgress("Failed finding all transactions. Num transactions: " +str(len(transactions)) + ". Found transactions: ")
@@ -640,14 +640,16 @@ def checkFeeTransaction(classInstance, data):
 
 def checkBaseTransactionOrderType(classInstance, data):
 
-    offerType = classInstance.config['offerType']
+    makeofferOfferType = classInstance.config['offerType']
 
     attachment = data['baseTransaction']['attachment']
 
-    isAsk = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
-    compString = "Transaction offerType: " + isAsk + ". Makeoffer offerType: " + str(offerType)    
+    baseOfferType = makeofferOfferType
+    transactionOfferType = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
 
-    if isAsk == "Sell" and offerType == "Sell":
+    compString = "Transaction offerType: " + transactionOfferType + ". Base offerType: " + str(baseOfferType)    
+
+    if transactionOfferType == baseOfferType:
         classInstance.retLevel = 0
         classInstance.retMsg = "SUCCESS: Base transaction offerType correct. " + compString
         classInstance.addProgress(classInstance.retMsg)
@@ -713,11 +715,15 @@ def checkBaseTransactionPrice(classInstance, data):
 
     transactionPriceNQT = attachment['priceNQT']
 
-    if "buyer2" in makeofferRet and makeofferRet['buyer2']['assetid'] == assetID:
-        makeofferPriceNQT = str(makeofferRet['buyer2']['priceNQT'])
-    elif "seller" in makeofferRet and makeofferRet['seller']['assetid'] == assetID:
-        makeofferPriceNQT = str(makeofferRet['seller']['priceNQT'])
-    else:
+    keys = ["buyer", "buyer2", "seller", "seller2"]
+    makeofferPriceNQT = None
+
+    for key in keys:
+        if key in makeofferRet and makeofferRet[key]['assetid'] == assetID:
+            makeofferPriceNQT = str(makeofferRet[key]['priceNQT'])
+            break
+
+    if not makeofferPriceNQT:
         classInstance.retLevel = 1
         classInstance.retMsg = "FAIL: Unexpected error - check makeofferAPIReturn"
         return
@@ -740,15 +746,17 @@ def checkBaseTransactionPrice(classInstance, data):
 
 def checkRelTransactionOrderType(classInstance, data):
 
-    offerType = classInstance.config['offerType']
+    makeofferOfferType = classInstance.config['offerType']
 
     attachment = data['relTransaction']['attachment']
 
-    isAsk = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
-    compString = "Transaction offerType: " + isAsk + ". Makeoffer offerType: " + str(offerType)    
+    relOfferType = "Sell" if makeofferOfferType == "Buy" else "Buy"
+    transactionOfferType = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
+
+    compString = "Transaction offerType: " + transactionOfferType + ". Rel offerType: " + str(relOfferType)    
 
 
-    if isAsk == "Buy" and offerType == "Sell":
+    if transactionOfferType == relOfferType:
         classInstance.retLevel = 0
         classInstance.retMsg = "SUCCESS: Rel transaction offerType correct. " + compString
         classInstance.addProgress(classInstance.retMsg)
@@ -813,11 +821,14 @@ def checkRelTransactionPrice(classInstance, data):
 
     transactionPriceNQT = attachment['priceNQT']
 
-    if "buyer2" in makeofferRet and makeofferRet['buyer2']['assetid'] == assetID:
-        makeofferPriceNQT = str(makeofferRet['buyer2']['priceNQT'])
-    elif "seller" in makeofferRet and makeofferRet['seller']['assetid'] == assetID:
-        makeofferPriceNQT = str(makeofferRet['seller']['priceNQT'])
-    else:
+    keys = ["buyer", "buyer2", "seller", "seller2"]
+    makeofferPriceNQT = None
+
+    for key in keys:
+        if key in makeofferRet and makeofferRet[key]['assetid'] == assetID:
+            makeofferPriceNQT = str(makeofferRet[key]['priceNQT'])
+
+    if not makeofferPriceNQT:
         classInstance.retLevel = 1
         classInstance.retMsg = "FAIL: Unexpected error - check makeofferAPIReturn"
         return
