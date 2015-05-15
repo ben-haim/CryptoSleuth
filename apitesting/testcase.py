@@ -98,6 +98,7 @@ class Runner(TestCase):
                 self.mainHandler.storeData(key, data[key])
 
         self.finished = 1
+
         if self.retLevel == -1:
             raise NameError("test")
 
@@ -105,19 +106,20 @@ class Runner(TestCase):
     def startingLogs(self, prevCaseData):
 
         self.addProgress(" ")
+        self.addProgress(" ")
+        self.addProgress("RUNNER: " + self.func)
         self.addProgress("*"*20)
-        self.addProgress("Starting case: " + self.func)
 
         if prevCaseData:
             self.addProgress("Using data: ")
             for key in prevCaseData:
-                line = key + ": " + toString(prevCaseData[key])
+                line = "    " + key + ": " + toString(prevCaseData[key])
                 self.addProgress(line)
 
         if self.config:
             self.addProgress("Using config options: ")
             for key in self.config:
-                line = key + ": " + toString(self.config[key])
+                line = "    " + key + ": " + toString(self.config[key])
                 self.addProgress(line)
 
         self.addProgress("-"*20)
@@ -138,10 +140,11 @@ class Runner(TestCase):
             for i in range(len(self.retData)):
                 data = self.retData[i]
                 for key in data:
-                    line = key + ": " + toString(data[key])
+                    line = "    " + key + ": " + toString(data[key])
                     self.addProgress(line)
 
         self.addProgress("*"*20)
+        self.addProgress(" ")
         self.addProgress(" ")
 
 

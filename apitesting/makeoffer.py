@@ -226,7 +226,7 @@ def checkBaseTransactionHandler(classInstance):
 
 
     checkBaseTransactionAmount_Config = {"baseAsset":config['baseAsset']}
-    checkBaseTransactionAmount_NeededData = ["baseTransaction", "makeofferAPIParams"]
+    checkBaseTransactionAmount_NeededData = ["baseTransaction", "makeofferAPIReturn"]
     checkBaseTransactionAmount_Func = "checkBaseTransactionAmount"
     checkBaseTransactionAmount_Case = Runner(func=checkBaseTransactionAmount_Func, config=checkBaseTransactionAmount_Config, neededData=checkBaseTransactionAmount_NeededData, mainHandler=classInstance.mainHandler)
 
@@ -254,7 +254,7 @@ def checkRelTransactionHandler(classInstance):
 
 
     checkRelTransactionAmount_Config = {"relAsset":config['relAsset']}
-    checkRelTransactionAmount_NeededData = ["relTransaction", "makeofferAPIParams"]
+    checkRelTransactionAmount_NeededData = ["relTransaction", "makeofferAPIReturn"]
     checkRelTransactionAmount_Func = "checkRelTransactionAmount"
     checkRelTransactionAmount_Case = Runner(func=checkRelTransactionAmount_Func, config=checkRelTransactionAmount_Config, neededData=checkRelTransactionAmount_NeededData, mainHandler=classInstance.mainHandler)
 
@@ -644,34 +644,61 @@ def checkBaseTransactionOrderType(classInstance, data):
 
     attachment = data['baseTransaction']['attachment']
 
-    isAsk = "version.AskOrderPlacement" in attachment
+    isAsk = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
+    compString = "Transaction offerType: " + isAsk + ". Makeoffer offerType: " + str(offerType)    
 
-    if isAsk and offerType == "Sell":
-        classInstance.addProgress("Base offerType correct. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
+    if isAsk == "Sell" and offerType == "Sell":
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Base transaction offerType correct. " + compString
+        classInstance.addProgress(classInstance.retMsg)
     else:
-        classInstance.addProgress("Base offerType incorrect. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Base transaction offerType incorrect. " + compString
+        classInstance.addProgress(classInstance.retMsg)
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
+
 
 
 def checkBaseTransactionAmount(classInstance, data):
 
+    import decimal
+
     decimals = classInstance.config['baseAsset']['decimals']
 
-    params = data['makeofferAPIParams']
+    makeofferRet = data['makeofferAPIReturn']
     attachment = data['baseTransaction']['attachment']
 
-    perc = params['perc']
 
-    amount = attachment['quantityQNT']
-    amount = float(amount) / float(pow(10, int(decimals)))
-    paramAmount = perc + "~" + str(params['baseiQ']['volume'])   #paramAmount = float((int(self.perc) / 100) * self.params['baseiQ']['volume'])
+    #decimalPlaces = decimal.Decimal(10) ** (-abs(int(decimals)))
 
-    classInstance.addProgress("BASE AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    perc = makeofferRet['perc']
+    percMultiplier_Float = float(int(perc)) / float(100)
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
+    transactionAmountQNT = str(attachment['quantityQNT'])
+    transactionAmount = float(transactionAmountQNT) / float(pow(10, int(decimals)))
+
+    makeofferAmountQNT_Raw = str(makeofferRet['baseamount'])
+    makeofferAmountQNT_Float = float(makeofferAmountQNT_Raw) / float(pow(10, 8 - int(decimals)))
+    makeofferAmountQNT_WithPerc_Float = percMultiplier_Float * makeofferAmountQNT_Float
+
+    makeofferAmount = float(int(makeofferAmountQNT_WithPerc_Float)) / float(pow(10, int(decimals)))
+
+
+    if int(transactionAmountQNT) == int(makeofferAmountQNT_WithPerc_Float):
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Base transaction amount matches makeoffer return amount"
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Base transaction amount does not equal makeoffer base amount: " + str(int(transactionAmountQNT)) + " vs. " + str(int(makeofferAmountQNT_WithPerc_Float))
+
+    classInstance.addProgress("Base transaction amount QNT: " + str(transactionAmountQNT) + ".  Makeoffer base amount QNT: " + str(int(makeofferAmountQNT_WithPerc_Float)))
+    classInstance.addProgress(" ")
+    classInstance.addProgress("Makeoffer base amount QNT(float): " + str(makeofferAmountQNT_WithPerc_Float))
+    classInstance.addProgress(" ")
+    classInstance.addProgress("Makeoffer base amount: " + str(makeofferAmount))
+    classInstance.addProgress("Base Transaction amount: " + str(transactionAmount))
+    classInstance.addProgress(" ")
+    classInstance.addProgress(classInstance.retMsg)
 
 
 
@@ -699,36 +726,63 @@ def checkRelTransactionOrderType(classInstance, data):
     offerType = classInstance.config['offerType']
 
     attachment = data['relTransaction']['attachment']
-    isAsk = "version.AskOrderPlacement" in attachment
+
+    isAsk = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
+    compString = "Transaction offerType: " + isAsk + ". Makeoffer offerType: " + str(offerType)    
 
 
-    if not isAsk and offerType == "Sell":
-        classInstance.addProgress("REL offerType correct. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
+    if isAsk == "Buy" and offerType == "Sell":
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Rel transaction offerType correct. " + compString
+        classInstance.addProgress(classInstance.retMsg)
     else:
-        classInstance.addProgress("REL offerType incorrect. transaction offerType: " + str(isAsk) + ". proper offerType: " + str(offerType))
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Rel transaction offerType incorrect. " + compString
+        classInstance.addProgress(classInstance.retMsg)
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
 
 
 
 def checkRelTransactionAmount(classInstance, data):
 
+    import decimal
+
     decimals = classInstance.config['relAsset']['decimals']
 
-    params = data['makeofferAPIParams']
+    makeofferRet = data['makeofferAPIReturn']
     attachment = data['relTransaction']['attachment']
 
-    perc = params['perc']
 
-    amount = attachment['quantityQNT']
-    amount = float(amount) / float(pow(10, int(decimals)))
+    #decimalPlaces = decimal.Decimal(10) ** (-abs(int(decimals)))
 
-    paramAmount = perc + "~" + str(params['reliQ']['volume'])   #paramAmount = float((int(self.perc) / 100) * self.params['baseiQ']['volume'])
-    classInstance.addProgress("REL AMOUNT: " + paramAmount + " --- ACTUAL AMOUNT: " + str(amount))
+    perc = makeofferRet['perc']
+    percMultiplier_Float = float(int(perc)) / float(100)
 
-    classInstance.retLevel = 0
-    classInstance.retMsg = "OK: Pass"
+    transactionAmountQNT = str(attachment['quantityQNT'])
+    transactionAmount = float(transactionAmountQNT) / float(pow(10, int(decimals)))
+
+    makeofferAmountQNT_Raw = str(makeofferRet['relamount'])
+    makeofferAmountQNT_Float = float(makeofferAmountQNT_Raw) / float(pow(10, 8 - int(decimals)))
+    makeofferAmountQNT_WithPerc_Float = percMultiplier_Float * makeofferAmountQNT_Float
+
+    makeofferAmount = float(int(makeofferAmountQNT_WithPerc_Float)) / float(pow(10, int(decimals)))
+
+
+    if int(transactionAmountQNT) == int(makeofferAmountQNT_WithPerc_Float):
+        classInstance.retLevel = 0
+        classInstance.retMsg = "SUCCESS: Rel transaction amount matches makeoffer return amount"
+    else:
+        classInstance.retLevel = 1
+        classInstance.retMsg = "FAIL: Rel transaction amount does not equal makeoffer rel amount: " + str(int(transactionAmountQNT)) + " vs. " + str(int(makeofferAmountQNT_WithPerc_Float))
+
+    classInstance.addProgress("Rel transaction amount QNT: " + str(transactionAmountQNT) + ".  Makeoffer rel amount QNT: " + str(int(makeofferAmountQNT_WithPerc_Float)))
+    classInstance.addProgress(" ")
+    classInstance.addProgress("Makeoffer rel amount QNT(float): " + str(makeofferAmountQNT_WithPerc_Float))
+    classInstance.addProgress(" ")
+    classInstance.addProgress("Makeoffer rel amount: " + str(makeofferAmount))
+    classInstance.addProgress("Rel transaction amount: " + str(transactionAmount))
+    classInstance.addProgress(" ")
+    classInstance.addProgress(classInstance.retMsg)
 
 
 
