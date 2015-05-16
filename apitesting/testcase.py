@@ -193,8 +193,9 @@ class Handler(TestCase):
 
 class Controller(Handler):
 
-    def __init__(self, config={}, filename=None, user=None, snDaemon=None):
+    def __init__(self, config={}, filename=None, user=None, snDaemon=None, controllerName=None):
         Handler.__init__(self)
+        self.controllerName = controllerName
         self.data = {}
         self.user = user
         self.snDaemon = snDaemon
@@ -282,7 +283,7 @@ class Controller(Handler):
 
         overview.append("*"*30)
 
-        overview.append("Test Name: " + self.filename)
+        overview.append("Test Name: " + self.controllerName)
         overview.append("Start time: " + getDateNoMS(int(self.startTime)))
         overview.append("End time: " + getDateNoMS(int(self.endTime)))
         #overview.append("Elapsed time: " + getTimer(int(self.endTime - self.startTime)))
@@ -310,6 +311,32 @@ class Controller(Handler):
 
         prependToFile(self.filename, overview)
 
+    
+    def testSummary(self):
+
+        overview = []
+        allRunners = self.getAllRunners()
+        allRunnersCounts = self.countAllRunners(allRunners)
+
+        overview.append("Test Name: " + self.controllerName)
+        overview.append("*"*30)
+        overview.append("Start time: " + getDateNoMS(int(self.startTime)))
+        overview.append("End time: " + getDateNoMS(int(self.endTime)))
+
+        overview.append("Test Options: ")
+        for key in self.config:
+            overview.append("    " + key + ": " + toString(self.config[key]))
+
+        overview.append("Num runners: " + str(allRunnersCounts['numRunners']))
+        overview.append("Num finished: " + str(allRunnersCounts['numFinished']) + "/" + str(allRunnersCounts['numRunners']))
+        overview.append("Num successful: " + str(allRunnersCounts['numSuccess']) + "/" + str(allRunnersCounts['numFinished']))
+        overview.append("Num failed: " + str(allRunnersCounts['numFailed']) + "/" + str(allRunnersCounts['numFinished']))
+        overview.append("Num warnings: " + str(allRunnersCounts['numWarnings']) + "/" + str(allRunnersCounts['numFinished']))
+        overview.append("*"*30)
+        overview.append(" ")
+        overview.append(" ")
+
+        return overview
 
 
     def run(self):
@@ -326,6 +353,8 @@ class Controller(Handler):
         self.endTime = time.time()
 
         self.makeOverview()
+
+        return self
 
             
         

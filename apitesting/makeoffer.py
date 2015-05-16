@@ -11,8 +11,8 @@ from testcase import *
 
 class Makeoffer(Controller):
 
-    def __init__(self, config={}, filename=None, user=None, snDaemon=None):
-        Controller.__init__(self, config=config, filename=filename, user=user, snDaemon=snDaemon)
+    def __init__(self, config={}, filename=None, user=None, snDaemon=None, controllerName=None):
+        Controller.__init__(self, config=config, filename=filename, user=user, snDaemon=snDaemon, controllerName=controllerName)
 
         self.baseAsset = checkObj(config, "baseAsset", None)
         self.baseAmount = checkObj(config, "baseAmount", 0)

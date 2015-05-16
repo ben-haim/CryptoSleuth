@@ -357,9 +357,13 @@ class padMenu(menu):
         except:
             self.parent.cursesObj.clear()
 
-    def updateData(self, data):
+    def updateData(self, data, append=False):
         
-        self.data = data
+        if append:
+            for key in data:
+                self.data.append(key)
+        else:
+            self.data = data
         numData = len(self.data)
         self.maxRows = numData 
         self.maxCols = numData/self.maxRows

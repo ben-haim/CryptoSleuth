@@ -18,7 +18,7 @@ from utils import *
 #from api import API
 
 
-
+allControllers = []
 windowStack = []
 
 allWindows = {
@@ -153,21 +153,22 @@ def processWindow(window):
 
 def makeofferTests():
 
+    import random
+    import itertools
+
     global snDaemon
     global user
+    global allControllers
 
-    baseAsset = user.getAsset("assetID", "2892714921553533909")
-    relAsset = user.getAsset("assetID", "13995071746675094813")
-
-
-    counter = 0
 
     config = {
-        "baseAsset": baseAsset,
+        "baseAsset": None,
+        "baseDecimals":None,
         "baseAmount": 0,
         "baseAmountDecimals": None,
         "minBaseAmount": 0,
-        "relAsset": relAsset,
+        "relAsset": None,
+        "relDecimals":None,
         "relAmount": 0,
         "minRelAmount": 0,
         "perc": 1,
@@ -176,29 +177,84 @@ def makeofferTests():
         #"isExternalExchange": {"value":None, "default":None}
     }
 
-    while counter < 1:
+    assets = []
+    history = []
+    assets.append(user.getAsset("assetID", "2677462001133444117")) #sleuth00
+    assets.append(user.getAsset("assetID", "2892714921553533909")) #sleuth20
+    assets.append(user.getAsset("assetID", "13995071746675094813")) #sleuth40
+    assets.append(user.getAsset("assetID", "5483407135476088028")) #sleuth60
+    pairs = itertools.permutations(assets, 2)
 
-        baseAmountDecimals = 0
-        while baseAmountDecimals <= int(baseAsset['decimals']):
-            #config['perc'] = "1"
-            config['baseAmountDecimals'] = baseAmountDecimals
-            filename = "makeoffer_"+str(counter)
+    for pair in pairs:
+        baseAsset, relAsset = pair
+        #if baseAsset['assetID'] != "2677462001133444117":
+        #    continue
+        config['baseAsset'] = baseAsset
+        config['relAsset'] = relAsset
+        config['baseDecimals'] = str(baseAsset['decimals'])
+        config['relDecimals'] = str(relAsset['decimals'])
 
-            makeoffer = Makeoffer(config=config, filename=filename, user=user, snDaemon=snDaemon)
-            makeoffer.initCases()
-            makeoffer.run()
+        config['offerType'] = "Sell"
+        filename = "./makeoffer_tests/" + str(baseAsset['name']) + "-" + str(relAsset['name']) + "/" + config['offerType']
+        baseAmountDecimalsLoop(config, filename)
 
-            config['offerType'] = "Sell" if config['offerType'] == "Buy" else "Buy"
-            baseAmountDecimals += 1
-            time.sleep(1)
-            counter += 1
+        config['offerType'] = "Buy"
+        filename = "./makeoffer_tests/" + str(baseAsset['name']) + "-" + str(relAsset['name']) + "/" + config['offerType']
+        baseAmountDecimalsLoop(config, filename)
 
 
-    #window = allWindows['supernet']
-    #pad = window.children["pads"]["progressPad"]
-    #t = Thread(target=caseRefresher)
-    #t.daemon = True
-    #t.start()
+    for controller in allControllers:
+        overview = controller.testSummary()
+        with open("alloverviews", 'a+') as f:
+            for line in overview:
+                f.write(line)
+            f.close()
+    
+    
+
+
+def baseAmountDecimalsLoop(config, filename):
+
+    import os
+
+    global user
+    global snDaemon
+    global allControllers
+
+    baseAmountDecimals = 0
+
+    while baseAmountDecimals <= int(config['baseAsset']['decimals']):
+        config['baseAmountDecimals'] = baseAmountDecimals
+        addedFilename = filename + "/" + "baseDec-" + str(baseAmountDecimals) + ".txt"
+        if not os.path.exists(os.path.dirname(addedFilename)):
+            os.makedirs(os.path.dirname(addedFilename))
+        controllerName = str(config['baseAsset']['name']) + "-" + str(config['relAsset']['name']) + "_" + config['offerType'] + "_" + "baseDec-" + str(baseAmountDecimals)
+        makeoffer = Makeoffer(config=config, filename=addedFilename, user=user, snDaemon=snDaemon, controllerName=controllerName)
+        makeoffer.initCases()
+        controller = makeoffer.run()
+        allControllers.append(controller)
+
+        blockUntilNXTBal()
+        baseAmountDecimals += 1
+        time.sleep(1)
+
+
+def blockUntilNXTBal():
+
+    global allWindows
+    global user
+
+    pad = allWindows['supernet'].children["pads"]["progressPad"]
+
+    while True:
+        nxtBalance = user.api.doAPICall("getBalance", {"requestType":"getBalance","account":user.nxtID}, True)
+        if int(nxtBalance['unconfirmedBalanceNQT']) < 40000000000:
+            time.sleep(10)
+            pad.menu.updateData([getDateNoMS(time.time()), nxtBalance], append=True)
+            pad.menu.menuToBottom() 
+        else:
+            break
+
 
 if __name__ == '__main__':
 
