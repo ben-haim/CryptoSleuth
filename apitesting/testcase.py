@@ -10,6 +10,7 @@ import types
 import makeoffer
 
 
+
 class TestCase(object):
     def __init__(self, config=None, typeCase=None, func=None, parent=None, mainHandler=None):
 
@@ -190,6 +191,56 @@ class Handler(TestCase):
                 self.children[i].siblings.append(case)
 
 
+class HandlerLooper(TestCase):
+
+    def __init__(self, config=None, mainHandler=None, parent=None):
+        TestCase.__init__(self, config=config, mainHandler=mainHandler, parent=parent)
+
+        self.typeCase = "handlerLooper"
+        self.numLoops = 0
+        self.sleepTime = 0
+        self.breaker = 0
+
+
+    def run(self):
+        counter = 0
+        isLooping = True
+
+        while isLooping and counter < self.numLoops:
+            for i in range(len(self.children)):
+                testCase = self.children[i]
+
+                try:
+                    testCase.run()
+                except Exception as e:
+                    if i == self.breaker:
+                        if counter == self.numLoops - 1:
+                            raise e
+                        else:
+                            pass
+                    else:
+                        raise e
+                else:
+                    if i == self.breaker:
+                        isLooping = False
+
+            counter += 1
+            if isLooping:
+                time.sleep(self.sleepTime)
+
+
+    def addChild(self, case):
+
+        index = len(self.children)
+        case.childIndex = index
+        case.parent = self
+        self.children.append(case)
+
+        for i in range(len(self.children)):
+            if i != index:
+                self.children[i].siblings.append(case)
+
+
 
 class Controller(Handler):
 
@@ -201,6 +252,8 @@ class Controller(Handler):
         self.snDaemon = snDaemon
         self.api = API()
         self.filename = filename
+        self.retLevel = 0
+        self.retMsg = ""
 
         self.config = config
 
@@ -228,6 +281,8 @@ class Controller(Handler):
         numSuccess = 0
         numFailed = 0
         numWarnings = 0
+        failedRunners = []
+        warningRunners = []
 
         for runner in allRunners:
 
@@ -238,12 +293,14 @@ class Controller(Handler):
                     numSuccess += 1
                 elif runner.retLevel == -1:
                     numFailed += 1
+                    failedRunners.append(runner)
                 else:
                     numWarnings += 1
+                    warningRunners.append(runner)
 
             numRunners += 1
 
-        return {"numRunners":numRunners, "numFinished":numFinished, "numFailed":numFailed, "numSuccess":numSuccess, "numWarnings":numWarnings}
+        return {"numRunners":numRunners, "numFinished":numFinished, "numFailed":numFailed, "numSuccess":numSuccess, "numWarnings":numWarnings, "failedRunners":failedRunners, "warningRunners":warningRunners}
 
 
     def getAllRunners(self):
@@ -273,6 +330,7 @@ class Controller(Handler):
             else:
                 for j in self.getAllRunnersGen(child.children):
                     yield j
+
 
 
     def makeOverview(self):
@@ -339,6 +397,20 @@ class Controller(Handler):
         return overview
 
 
+
+    def finalStatusTest(self):
+
+        allRunners = self.getAllRunners()
+        allRunnersCounts = self.countAllRunners(allRunners)
+        if allRunnersCounts['numFailed'] > 0:
+            self.retLevel = -1
+            self.retMsg = allRunnersCounts['failedRunners'][0].retMsg
+        if allRunnersCounts['numWarnings'] > 0:
+            self.retLevel = 1
+            self.retMsg = allRunnersCounts['warningRunners'][0].retMsg
+            
+
+
     def run(self):
 
         self.startTime = time.time()
@@ -351,8 +423,8 @@ class Controller(Handler):
                 break
 
         self.endTime = time.time()
-
         self.makeOverview()
+        self.finalStatusTest()
 
         return self
 

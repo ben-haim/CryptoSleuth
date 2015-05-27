@@ -60,19 +60,19 @@ class Makeoffer(Controller):
             self.numTransactions = 3
 
 
-        getOrderbook_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmount":self.baseAmount, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
+        getOrderbook_Config = {"baseAsset":self.baseAsset, "relAsset":self.relAsset}
         getOrderbook_Case = Handler(config=getOrderbook_Config, parent=self, mainHandler=self)
         getOrderbookHandler(getOrders_Case)
         self.addChild(getOrderbook_Case)
 
 
-        parseOrders_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmountDecimals":self.baseAmountDecimals, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
+        parseOrders_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmountDecimals":self.baseAmountDecimals}
         parseOrders_Case = Handler(config=parseOrders_Config, parent=self, mainHandler=self)
         parseOrdersHandler(selectOrder_Case)
         self.addChild(parseOrders_Case)
 
 
-        selectOrder_Config = {"exchangeType":self.exchangeType, "offerType":self.offerType, "baseAmountDecimals":self.baseAmountDecimals, "baseAsset":self.baseAsset, "relAsset":self.relAsset}
+        selectOrder_Config = {}
         selectOrder_Case = Handler(config=selectOrder_Config, parent=self, mainHandler=self)
         selectOrderHandler(selectOrder_Case)
         self.addChild(selectOrder_Case)
@@ -83,8 +83,8 @@ class Makeoffer(Controller):
         self.addChild(makeofferAPICall_Case)
 
 
-        getTransactions_Config = {"baseAsset":self.baseAsset, "relAsset":self.relAsset, "numTransactions":self.numTransactions, "offerType":self.offerType, "nxtRS":self.user.nxtRS}
-        getTransactions_Case = Handler(config=getTransactions_Config, parent=self, mainHandler=self)
+        getTransactions_Config = {"baseAsset":self.baseAsset, "relAsset":self.relAsset, "numTransactions":self.numTransactions, "nxtRS":self.user.nxtRS}
+        getTransactions_Case = HandlerLooper(config=getTransactions_Config, parent=self, mainHandler=self)
         getTransactionsHandler(getTransactions_Case)
         self.addChild(getTransactions_Case)
 
@@ -128,9 +128,9 @@ def parseOrdersHandler(classInstance):
     config = classInstance.config
 
 
-    parseOrdersByOfferType_Config = {"exchangeType":config['exchangeType']}
-    parseOrdersByOfferType_NeededData = ["orders"]
-    parseOrdersByOfferType_Func = "parseOrdersByExchange"
+    parseOrdersByOfferType_Config = {"offerType":config['offerType']}
+    parseOrdersByOfferType_NeededData = ["orderbook"]
+    parseOrdersByOfferType_Func = "parseOrdersByOfferType"
     parseOrdersByOfferType_Case = Runner(func=parseOrdersByOfferType_Func, config=parseOrdersByOfferType_Config, neededData=parseOrdersByOfferType_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(parseOrdersByOfferType_Case)
 
@@ -193,22 +193,26 @@ def getTransactionsHandler(classInstance):
 
     config = classInstance.config
 
-    getTransactionAPICall_Config = {"nxtRS":config['nxtRS'], "numTransactions":config['numTransactions']}
+    classInstance.numLoops = 5
+    classInstance.sleepTime = 1
+    classInstance.breaker = 2
+
+    getTransactionAPICall_Config = {"nxtRS":config['nxtRS']}
     getTransactionAPICall_NeededData = ["makeofferAPIReturn"]
     getTransactionAPICall_Func = "doUnconfirmedTransactionsAPICall"
     getTransactionAPICall_Case = Runner(func=getTransactionAPICall_Func, config=getTransactionAPICall_Config, neededData=getTransactionAPICall_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(getTransactionAPICall_Case) 
 
 
-    parseTransactions_Config = {"baseAsset":config['baseAsset']}
-    parseTransactions_NeededData = ["transactions"]
+    parseTransactions_Config = {"baseAsset":config['baseAsset'], "relAsset":config['relAsset']}
+    parseTransactions_NeededData = ["unconfirmedTransactions", "makeofferAPIReturn"]
     parseTransactions_Func = "parseTransactions"
     parseTransactions_Case = Runner(func=parseTransactions_Func, config=parseTransactions_Config, neededData=parseTransactions_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(parseTransactions_Case)
 
 
-    countTransactions_Config = {"baseAsset":config['baseAsset']}
-    countTransactions_NeededData = ["transactions"]
+    countTransactions_Config = {"numTransactions":config['numTransactions']}
+    countTransactions_NeededData = ["sortedTransactions"]
     countTransactions_Func = "countTransactions"
     countTransactions_Case = Runner(func=countTransactions_Func, config=countTransactions_Config, neededData=countTransactions_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(countTransactions_Case)
@@ -247,21 +251,21 @@ def checkBaseTransactionHandler(classInstance):
     config = classInstance.config
 
 
-    checkBaseTransactionOrderType_Config = {"offerType":config['offerType']}
+    checkBaseTransactionOrderType_Config = {"offerType":config['offerType'], "isBase":True}
     checkBaseTransactionOrderType_NeededData = ["baseTransaction"]
-    checkBaseTransactionOrderType_Func = "checkBaseTransactionOrderType"
-    checkBaseTransactionOrderType_Case = Runner(func=checkTransactionOrderType_Func, config=checkBaseTransactionOrderType_Config, neededData=checkBaseTransactionOrderType_NeededData, mainHandler=classInstance.mainHandler)
+    checkBaseTransactionOrderType_Func = "checkTransactionOrderType"
+    checkBaseTransactionOrderType_Case = Runner(func=checkBaseTransactionAmount_Func, config=checkBaseTransactionOrderType_Config, neededData=checkBaseTransactionOrderType_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(checkBaseTransactionOrderType_Case) 
 
 
-    checkBaseTransactionAmount_Config = {"baseAsset":config['baseAsset']}
+    checkBaseTransactionAmount_Config = {"baseAsset":config['baseAsset'], "isBase":True}
     checkBaseTransactionAmount_NeededData = ["baseTransaction", "makeofferAPIReturn"]
-    checkBaseTransactionAmount_Func = "checkBaseTransactionAmount"
-    checkBaseTransactionAmount_Case = Runner(func=checkTransactionAmount_Func, config=checkBaseTransactionAmount_Config, neededData=checkBaseTransactionAmount_NeededData, mainHandler=classInstance.mainHandler)
+    checkBaseTransactionAmount_Func = "checkTransactionAmount"
+    checkBaseTransactionAmount_Case = Runner(func=checkBaseTransactionAmount_Func, config=checkBaseTransactionAmount_Config, neededData=checkBaseTransactionAmount_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(checkBaseTransactionAmount_Case) 
 
 
-    checkBaseTransactionPrice_Config = {"baseAsset":config['baseAsset']}
+    checkBaseTransactionPrice_Config = {"baseAsset":config['baseAsset'], "isBase":True}
     checkBaseTransactionPrice_NeededData = ["baseTransaction", "makeofferAPIReturn"]
     checkBaseTransactionPrice_Func = "checkTransactionPrice"
     checkBaseTransactionPrice_Case = Runner(func=checkBaseTransactionPrice_Func, config=checkBaseTransactionPrice_Config, neededData=checkBaseTransactionPrice_NeededData, mainHandler=classInstance.mainHandler)
@@ -275,21 +279,21 @@ def checkRelTransactionHandler(classInstance):
     config = classInstance.config
 
 
-    checkRelTransactionOrderType_Config = {"offerType":config['offerType']}
+    checkRelTransactionOrderType_Config = {"offerType":config['offerType'], "isBase":False}
     checkRelTransactionOrderType_NeededData = ["relTransaction"]
     checkRelTransactionOrderType_Func = "checkTransactionOrderType"
     checkRelTransactionOrderType_Case = Runner(func=checkRelTransactionOrderType_Func, config=checkRelTransactionOrderType_Config, neededData=checkRelTransactionOrderType_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(checkRelTransactionOrderType_Case) 
 
 
-    checkRelTransactionAmount_Config = {"relAsset":config['relAsset']}
+    checkRelTransactionAmount_Config = {"relAsset":config['relAsset'], "isBase":False}
     checkRelTransactionAmount_NeededData = ["relTransaction", "makeofferAPIReturn"]
     checkRelTransactionAmount_Func = "checkTransactionAmount"
     checkRelTransactionAmount_Case = Runner(func=checkRelTransactionAmount_Func, config=checkRelTransactionAmount_Config, neededData=checkRelTransactionAmount_NeededData, mainHandler=classInstance.mainHandler)
     classInstance.addChild(checkRelTransactionAmount_Case) 
 
 
-    checkRelTransactionPrice_Config = {"relAsset":config['relAsset']}
+    checkRelTransactionPrice_Config = {"relAsset":config['relAsset'], "isBase":False}
     checkRelTransactionPrice_NeededData = ["relTransaction", "makeofferAPIReturn"]
     checkRelTransactionPrice_Func = "checkTransactionPrice"
     checkRelTransactionPrice_Case = Runner(func=checkRelTransactionPrice_Func, config=checkRelTransactionPrice_Config, neededData=checkRelTransactionPrice_NeededData, mainHandler=classInstance.mainHandler)
@@ -562,7 +566,7 @@ def buildMakeofferAPIParams(classInstance, data):
 def doMakeofferAPICall(classInstance, data):
 
     #dependant
-    params = data['orderbookAPIParams']
+    params = data['makeofferAPIParams']
     api = classInstance.mainHandler.api
     #
 
@@ -597,13 +601,13 @@ def doMakeofferAPICall(classInstance, data):
 def doUnconfirmedTransactionsAPICall(classInstance, data):
 
     #dependant
-    getTransactionsAPIParams = {}
+    api = classInstance.mainHandler.api
+    nxtRS = classInstance.config['nxtRS']
+
+    getTransactionsAPIParams = {}   #getTransactionsAPIParams = data['getTransactionsAPIParams']
     getTransactionsAPIParams['requestType'] = "getUnconfirmedTransactions"
     getTransactionsAPIParams['account'] = nxtRS
 
-    getTransactionsAPIParams = data['getTransactionsAPIParams']
-    api = classInstance.mainHandler.api
-    nxtRS = classInstance.config['nxtRS']
     #
 
 
@@ -626,6 +630,7 @@ def doUnconfirmedTransactionsAPICall(classInstance, data):
     classInstance.retData.append({"unconfirmedTransactions":unconfirmedTransactions})
 
 
+
 def checkAPICallReturn(classInstance, data):
 
     if "unconfirmedTransactions" in ret:
@@ -635,14 +640,14 @@ def checkAPICallReturn(classInstance, data):
         classInstance.addProgress("No unconfirmed transactions", indent=4)
 
 
+
 def parseTransactions(classInstance, data):
 
     #dependant
-    transactions = data['transactions']
     baseID = classInstance.config['baseAsset']['assetID']
-    relID = classInstance.config['baseAsset']['assetID']
+    relID = classInstance.config['relAsset']['assetID']
+    transactions = data['unconfirmedTransactions']
     refTX = data['makeofferAPIReturn']['triggerhash']
-    unconfirmedTransactions = doUnconfirmedTransactionsAPICall()
     #
 
     sortedTransactions = []
@@ -689,7 +694,10 @@ def parseTransactions(classInstance, data):
     classInstance.retData.append({"relTransaction":relTransaction})
 
 
-def countTransactions():
+def countTransactions(classInstance):
+
+    transactions = data['sortedTransactions']
+    numTransactions = classInstance.config['numTransactions']
 
     if len(transactions) == numTransactions:
         classInstance.retLevel = 0
@@ -697,7 +705,7 @@ def countTransactions():
         classInstance.addProgress(classInstance.retMsg)
     else:
         classInstance.retLevel = -1
-        classInstance.retMsg = "SUCCESS: All transactions found"
+        classInstance.retMsg = "FAIL: Could not find all transactions"
         classInstance.addProgress(classInstance.retMsg)
 
 
@@ -728,21 +736,27 @@ def checkFeeTransaction(classInstance, data):
 
 
 
-def checkTransactionOrderType():
+def checkTransactionOrderType(classInstance, data):
 
     #dependant
     makeofferOfferType = classInstance.config['offerType']
-    attachment = data['baseTransaction']['attachment']
-    attachment = data['relTransaction']['attachment']
 
-    offerType = makeofferOfferType ##swap
-    relOfferType = "Sell" if makeofferOfferType == "Buy" else "Buy" ##swap
+
+
+    isBase = classInstance.config['isBase']
+
+    if isBase:
+        attachment = data['baseTransaction']['attachment']
+        offerType = makeofferOfferType
+    else:
+        attachment = data['relTransaction']['attachment']
+        offerType = "Sell" if makeofferOfferType == "Buy" else "Buy"
 
     transactionOfferType = "Sell" if "version.AskOrderPlacement" in attachment else "Buy"
     #
 
-    offerType = offerType
-    compString = "Transaction offerType: " + transactionOfferType + ". Needed offerType: " + str(relOfferType)    
+
+    compString = "Transaction offerType: " + transactionOfferType + ". Needed offerType: " + str(offerType)    
 
     if transactionOfferType == offerType:
         classInstance.retLevel = 0
@@ -762,15 +776,19 @@ def checkTransactionAmount(classInstance, data):
     #dependant
     makeofferRet = data['makeofferAPIReturn']
     perc = makeofferRet['perc']
+    isBase = classInstance.config['isBase']
 
-    decimals = classInstance.config['baseAsset']['decimals']
-    decimals = classInstance.config['relAsset']['decimals']
+    if isBase:
+        decimals = classInstance.config['baseAsset']['decimals']
+        attachment = data['baseTransaction']['attachment']
+        amount = makeofferRet['baseamount']
 
-    attachment = data['relTransaction']['attachment']
-    attachment = data['baseTransaction']['attachment']
 
-    amount = makeofferRet['relamount']
-    amount = makeofferRet['baseamount']
+    else:
+        decimals = classInstance.config['relAsset']['decimals']
+        attachment = data['relTransaction']['attachment']
+        amount = makeofferRet['relamount']
+
 
     transactionAmountQNT = str(attachment['quantityQNT'])
     #
@@ -788,7 +806,7 @@ def checkTransactionAmount(classInstance, data):
         classInstance.retLevel = 1
         classInstance.retMsg = "FAIL: Transaction amount does not equal makeoffer amount: " + str(int(transactionAmountQNT)) + " vs. " + str(int(makeofferAmountQNT_WithPerc_Float))
 
-    classInstance.addProgress("Transaction amount QNT: " + str(transactionAmountQNT) + ".  Makeoffe amount QNT: " + str(int(makeofferAmountQNT_WithPerc_Float)))
+    classInstance.addProgress("Transaction amount QNT: " + str(transactionAmountQNT) + ".  Makeoffer amount QNT: " + str(int(makeofferAmountQNT_WithPerc_Float)))
     classInstance.addProgress("Makeoffer amount QNT(float): " + str(makeofferAmountQNT_WithPerc_Float))
     classInstance.addProgress("Makeoffer amount: " + str(makeofferAmount))
     classInstance.addProgress("Transaction amount: " + str(transactionAmount))
@@ -801,14 +819,17 @@ def checkTransactionPrice(classInstance, data):
     #dependant
     makeofferRet = data['makeofferAPIReturn']
 
-    assetID = classInstance.config['baseAsset']['assetID']
-    assetID = classInstance.config['relAsset']['assetID']
+    isBase = classInstance.config['isBase']
 
-    decimals = classInstance.config['baseAsset']['decimals']
-    decimals = classInstance.config['relAsset']['decimals']
+    if isBase:
+        assetID = classInstance.config['baseAsset']['assetID']
+        decimals = classInstance.config['baseAsset']['decimals']
+        attachment = data['baseTransaction']['attachment']
 
-    attachment = data['baseTransaction']['attachment']
-    attachment = data['relTransaction']['attachment']
+    else:
+        assetID = classInstance.config['relAsset']['assetID']
+        decimals = classInstance.config['relAsset']['decimals']
+        attachment = data['relTransaction']['attachment']
 
     transactionPriceNQT = attachment['priceNQT']
     keys = ["buyer", "buyer2", "seller", "seller2"]
