@@ -177,7 +177,7 @@ def handleRequest(**req):
         params['params'] = [receivedParamsString]
         params = json.dumps(params, separators=(',', ':'))
     
-        r = requests.post(url, data=params, headers=headers)
+        r = requests.post(btcdurl, data=params, headers=headers)
     
         ret = r.text
         parsed = parseHack(ret)
