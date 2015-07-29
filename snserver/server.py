@@ -1,13 +1,31 @@
-import SimpleXMLRPCServer
-import json
-import requests
+import sys
 import base64
+import ConfigParser
+import json
+import SimpleXMLRPCServer
+import requests
 
 
-url = "http://127.0.0.1:14632"
+Config = ConfigParser.ConfigParser()
+
+try:
+    Config.read('server.conf')
+    serverPort = Config.get('Server', 'port')
+    serverUser = Config.get('Server', 'user')
+    serverPass = Config.get('Server', 'pass')
+    rpcuser = Config.get('BitcoinDark', 'rpcuser')
+    rpcpass = Config.get('BitcoinDark', 'rpcpass')
+    rpcport = Config.get('BitcoinDark', 'rpcport')
+except:
+    sys.exit("Invalid server.conf")
+
+
+btcdurl = "http://127.0.0.1:" + rpcport
 nxturl = "http://127.0.0.1:7876/nxt?"
-pair = "user:pass"
-authPair = b'Basic ' + base64.b64encode(pair)
+
+pair = rpcuser + ":" + rpcpass
+authPair = base64.b64encode(pair)
+
 
 class retVal(object):
     def __init__(self):
@@ -16,19 +34,26 @@ class retVal(object):
         self.retbool = None
 
 
+
 class SleuthSimpleJSONRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', "null")
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', "content-type, accept")
+        self.send_header('Access-Control-Allow-Headers', "Authorization, content-type, accept")
         self.end_headers()
         self.wfile.flush()
 
     def do_POST(self):
         if not self.is_rpc_path_valid():
             self.report_404()
+            return
+
+        if self.authenticate(self.headers):
+            pass
+        else:
+            self.send_error(401, 'Authentication failed')
             return
 
         try:
@@ -58,7 +83,25 @@ class SleuthSimpleJSONRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHa
         self.wfile.write(response)
         self.wfile.flush()
         self.connection.shutdown(1)
-        
+
+
+    
+    def authenticate(self, headers):
+        from base64 import b64decode
+
+        (basic, _, encoded) = headers.get('Authorization').partition(' ')
+        assert basic == 'Basic', 'Only basic authentication supported'
+
+        encodedByteString = encoded.encode()
+        decodedBytes = b64decode(encodedByteString)
+        decodedString = decodedBytes.decode()
+        (username, _, password) = decodedString.partition(':')
+
+        if username == serverUser and password == serverPass:
+            return True
+
+        return False
+    
         
         
 def convert_to_json_obj(obj):
@@ -71,21 +114,23 @@ def convert_to_json_obj(obj):
 def server_thread():
 
     from jsonrpclib.SimpleJSONRPCServer import SimpleJSONRPCServer
-    host = "localhost"
-    port = 12345
-    server = SimpleJSONRPCServer(( host, port), requestHandler=SleuthSimpleJSONRPCRequestHandler, logRequests=True)
+
+    host = "127.0.0.1"
+    port = int(serverPort)
+    #http://user:pass@127.0.0.1:12345
+    server = SimpleJSONRPCServer((host, port), requestHandler=SleuthSimpleJSONRPCRequestHandler, logRequests=True)
     server.register_function(handleRequest, 'sendPost')
 
     server.serve_forever()
 
 
+def parseHack(string):
 
-def parseHack(str):
-    startIndex = str.find('{"result"')
+    startIndex = string.find('{"result"')
     startIndex = startIndex + 10
     
-    endIndex = str.find(',"error"')
-    sub = str[startIndex:endIndex]
+    endIndex = string.find(',"error"')
+    sub = string[startIndex:endIndex]
     obj = json.loads(sub)
     
     return obj
@@ -100,36 +145,32 @@ def handleRequest(**req):
     retObj = retVal()
     retObj.retbool = True
     retObj.retstat = "alive"
-    #retObj.retval = {}
-
 
     
     if plugin == "nxt":
-        #headers = {}
-        #headers['Content-Type'] = "application/json"
 
         params = {}
+
         for key in receivedParams:
             if key == "plugin":
                 continue
             params[key] = receivedParams[key]
-        #params = json.dumps(params)
-        #print params
+
         r = requests.post(nxturl, data=params)
         ret = r.json()
+
         retObj.retbool = True
         retObj.retstat = "alive"
         retObj.retval = ret
         
     elif plugin == "InstantDEX":
 
+        receivedParamsString = json.dumps(receivedParams, separators=(',', ':'))
+
         headers = {}
-        headers['Authorization'] = authPair
-        #headers['User-Agent'] = "AuthServiceProxy/0.1"
-        #headers['Content-Type'] = "application/x-www-form-urlencoded"
+        headers['Authorization'] = b'Basic ' + authPair
         headers['Content-Type'] = "application/json"
 
-        receivedParamsString = json.dumps(receivedParams, separators=(',', ':'))
         params = {}
         params['id'] = "777"*100
         params['method'] = "SuperNET"
@@ -137,23 +178,23 @@ def handleRequest(**req):
         params = json.dumps(params, separators=(',', ':'))
     
         r = requests.post(url, data=params, headers=headers)
-        #print r
     
         ret = r.text
         parsed = parseHack(ret)
-        
-        #print r.text
-    
+
         retObj.retbool = True
         retObj.retstat = "alive"
         retObj.retval = parsed
 
+
     retObj.retval = convert_to_json_obj(retObj.retval)
+
+
     return retObj
+
     
 if __name__ == '__main__':
     
 
-    
     server_thread()
 	
